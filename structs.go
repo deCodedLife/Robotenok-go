@@ -57,22 +57,6 @@ type Payment struct {
 	UserID    int32  `json:"user_id"`
 }
 
-type GroupType struct {
-	ID     int32  `json:"id"`
-	Active int8   `json:"active"`
-	Name   string `json:"name"`
-}
-
-type Group struct {
-	ID        int32  `json:"id"`
-	Active    int8   `json:"active"`
-	Name      string `json:"name"`
-	Time      string `json:"time"`
-	Duration  int32  `json:"duration"`
-	Weekday   int32  `json:"weekday"`
-	GroupType int32  `json:"group_type"`
-}
-
 type GroupStudents struct {
 	ID        int32 `json:"id"`
 	Active    int8  `json:"active"`
