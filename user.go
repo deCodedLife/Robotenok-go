@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -80,11 +79,7 @@ func (u User) Add(hash ConfirmedDevices) error {
 	query = "insert into robotenok.users (name, login, password) values (?, ?, ?)"
 	_, err = db.Query(query, u.Name, GenString(16), ToSHA512(u.Password))
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (u User) Remove() error {
@@ -98,8 +93,6 @@ func (u User) Update() error {
 	}
 
 	var query string
-
-	//noinspection SqlWithoutWhere
 	query = "update robotenok.users set active = 1"
 
 	if u.UserType != "" {
@@ -199,158 +192,92 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 	var newUser User
 	var device ConfirmedDevices
 
+	defer LogHandler("User add")
+
 	hash := r.URL.Query().Get("hash")
 
 	if len(hash) > 13 {
 		err := device.Get(hash)
-
-		if err != nil {
-			SendData(w, 401, "security error")
-		}
+		HandleError(err, w, SecurityError)
 	} else {
 		id, err := strconv.Atoi(hash)
-
-		if err != nil {
-			SendData(w, 400, "client sent wrong data")
-		}
+		HandleError(err, w, WrongDataError)
 
 		err = device.Get(id)
-
-		if err != nil {
-			SendData(w, 401, "security error")
-		}
+		HandleError(err, w, SecurityError)
 	}
 
 	if hash == "" {
-		SendData(w, 400, "can't read hash value")
+		SendData(w, 400, WrongDataError.Description)
 		return
 	}
 
 	err := requestHandler(&request, r)
-
-	if err != nil {
-		SendData(w, 400, "Client send a wrong or empty data")
-		return
-	}
+	HandleError(err, w, WrongDataError)
 
 	err = request.checkToken()
-
-	if err != nil {
-		SendData(w, 401, err.Error())
-		return
-	}
+	HandleError(err, w, SecurityError)
 
 	textJson, err := json.Marshal(request.Body)
-
-	if err != nil {
-		SendData(w, 400, err.Error())
-		return
-	}
+	HandleError(err, w, WrongDataError)
 
 	err = json.Unmarshal(textJson, &newUser)
-
-	if err != nil {
-		SendData(w, 400, "Client send a wrong or empty data")
-		return
-	}
+	HandleError(err, w, WrongDataError)
 
 	err = newUser.Add(device)
-
-	if err != nil {
-		log.Println(err.Error())
-		SendData(w, 500, "Something went wrong. " + err.Error())
-	}
+	HandleError(err, w, UnknownError)
 }
 
 func UpdateUser (w http.ResponseWriter, r *http.Request) {
 	var request Request
 	var updateUser User
 
-	err := requestHandler(&request, r)
+	defer LogHandler("user update")
 
-	if err != nil {
-		SendData(w, 400, "Client send a wrong or empty data")
-		return
-	}
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
 
 	err = request.checkToken()
-
-	if err != nil {
-		SendData(w, 401, err.Error())
-		return
-	}
+	HandleError(err, w, SecurityError)
 
 	textJson, err := json.Marshal(request.Body)
-
-	if err != nil {
-		SendData(w, 400, err.Error())
-		return
-	}
+	HandleError(err, w, WrongDataError)
 
 	err = json.Unmarshal(textJson, &updateUser)
-
-	if err != nil {
-		SendData(w, 400, "Client send a wrong or empty data")
-		return
-	}
+	HandleError(err, w, WrongDataError)
 
 	if request.UserID != updateUser.ID {
-		SendData(w, 401, "you can't change other user data")
+		SendData(w, 401, "You can't change other user data")
 		return
 	}
 
 	err = updateUser.Update()
-
-	if err != nil {
-		SendData(w, 500, "can't update user. Reason: " + err.Error())
-		return
-	}
+	HandleError(err, w, UnknownError)
 }
 
 func RemoveUser (w http.ResponseWriter, r *http.Request) {
 	var request Request
 	var removingUser User
 
-	err := requestHandler(&request, r)
+	defer LogHandler("user remove")
 
-	if err != nil {
-		SendData(w, 400, "Client send a wrong or empty data")
-		return
-	}
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
 
 	err = request.checkToken()
-
-	if err != nil {
-		SendData(w, 401, err.Error())
-		return
-	}
+	HandleError(err, w, SecurityError)
 
 	err = permCheck(request.UserID, 0)
-
-	if err != nil {
-		SendData(w, 401, err.Error())
-		return
-	}
+	HandleError(err, w, SecurityError)
 
 	textJson, err := json.Marshal(request.Body)
-
-	if err != nil {
-		SendData(w, 400, err.Error())
-		return
-	}
+	HandleError(err, w, WrongDataError)
 
 	err = json.Unmarshal(textJson, &removingUser)
-
-	if err != nil {
-		SendData(w, 400, "Client send a wrong or empty data")
-		return
-	}
+	HandleError(err, w, WrongDataError)
 
 	err = removingUser.Remove()
-
-	if err != nil {
-		SendData(w, 500, err.Error())
-	}
+	HandleError(err, w, UnknownError)
 }
 
 func SelectUser(w http.ResponseWriter, r *http.Request) {
@@ -359,32 +286,16 @@ func SelectUser(w http.ResponseWriter, r *http.Request) {
 	var selectedUsers Users
 
 	err := requestHandler(&request, r)
-
-	if err != nil {
-		SendData(w, 400, "Client send a wrong or empty data")
-		return
-	}
+	HandleError(err, w, WrongDataError)
 
 	err = request.checkToken()
-
-	if err != nil {
-		SendData(w, 401, err.Error())
-		return
-	}
+	HandleError(err, w, SecurityError)
 
 	textJson, err := json.Marshal(request.Body)
-
-	if err != nil {
-		SendData(w, 400, err.Error())
-		return
-	}
+	HandleError(err, w, WrongDataError)
 
 	err = json.Unmarshal(textJson, &searchedUser)
-
-	if err != nil {
-		SendData(w, 400, "Client send a wrong or empty data")
-		return
-	}
+	HandleError(err, w, WrongDataError)
 
 	requestLevel := 2
 
@@ -393,17 +304,10 @@ func SelectUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = permCheck(request.UserID, requestLevel)
-
-	if err != nil {
-		SendData(w, 401, err.Error())
-		return
-	}
+	HandleError(err, w, SecurityError)
 
 	err = selectedUsers.Select(searchedUser)
-
-	if err != nil {
-		SendData(w, 500, err.Error())
-	}
+	HandleError(err, w, UnknownError)
 
 	SendData(w, 200, selectedUsers)
 }

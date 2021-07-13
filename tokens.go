@@ -42,17 +42,16 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 	var input AuthData
 	var user User
 
+	defer LogHandler("auth")
+
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewDecoder(r.Body).Decode(&input)
-
-	if err != nil {
-		log.Println("[" + GetIP(r) + "] " + "[ERROR] [Auth] " + err.Error())
-		SendData(w, 400, "Client send a wrong or empty data")
-		return
-	}
+	HandleError(err, w, WrongDataError)
 
 	user.Login = input.Login
 	err = user.Select()
+
+	HandleError(err, w, UnknownError)
 
 	if SearchUser(user).ID == user.ID {
 		var err Error
@@ -62,25 +61,12 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err != nil {
-		SendData(w, 400, err.Error())
-		return
-	}
-
 	if user.Login == "" {
-		var err Error
-		err.create("User is not existing")
-
-		SendData(w, 400, err)
-		return
+		HandleError(errors.New("there no user in database"), w, SecurityError)
 	}
 
 	if input.Hash != user.Password {
-		var err Error
-		err.create("Password wrong")
-
-		SendData(w, 400, err)
-		return
+		HandleError(errors.New("password wrong"), w, SecurityError)
 	}
 
 	user.Secret = ToSHA512(GenString(64))
@@ -100,11 +86,11 @@ func (r *Request) checkToken () error {
 	user = SearchUser(user)
 
 	if user.ID == -1 {
-		return errors.New("security error")
+		return errors.New("hash is wrong")
 	}
 
 	if r.Token != user.Secret {
-		return errors.New("security error")
+		return errors.New("hash is wrong")
 	}
 
 	r.UserID = user.ID

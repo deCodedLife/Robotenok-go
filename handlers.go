@@ -8,11 +8,37 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
+func GetDate() string {
+	currentTime := time.Now()
+	return currentTime.Format("2006-01-02")
+}
+
+func GetTime() string {
+	currentTime := time.Now()
+	dateStamp := currentTime.Format("2006.01.02 15:04:05")
+	dateArray := strings.Fields(dateStamp)
+	return dateArray[1]
+}
+
 func (e *Error) create(description interface{}) {
 	e.Error = description
+}
+
+func LogHandler (sender string) {
+	if r := recover(); r != nil {
+		LogData(sender, r)
+	}
+}
+
+func HandleError(err error, w http.ResponseWriter, r ResponceError) {
+	if err != nil {
+		SendData(w, r.Status, r.Description)
+		panic(r.Description + " cause: " + err.Error())
+	}
 }
 
 func requestHandler (request *Request, r *http.Request) error {
@@ -132,6 +158,10 @@ func GetIP(req *http.Request) string {
 	return forward + "IP " + req.RemoteAddr
 }
 
+func LogData (sender string, data interface{}) {
+	log.Println("[" + strings.ToUpper(sender) + "]", data)
+}
+
 func SendData(w http.ResponseWriter, status int32, data interface{}) {
 	var response Response
 
@@ -139,13 +169,14 @@ func SendData(w http.ResponseWriter, status int32, data interface{}) {
 	response.Response = data
 
 	if status != 200 {
-		log.Println("[EXCEPTION] " + data.(string))
+		err := Error{data}
+		data = err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(response)
 
 	if err != nil {
-		log.Println("Can't send data to user. Reason: " + err.Error())
+		LogData("response writer", "Can't send data to user. Reason: " + err.Error())
 	}
 }

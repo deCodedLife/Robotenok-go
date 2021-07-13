@@ -1,5 +1,25 @@
 package main
 
+type ResponceError struct {
+	Status int32
+	Description string
+}
+
+func (r *ResponceError) WrongDataError() {
+	r.Status = 400
+	r.Description = "Client send a wrong or empty data"
+}
+
+func (r *ResponceError) SecurityError() {
+	r.Status = 401
+	r.Description = "Security error"
+}
+
+func (r *ResponceError) UnknownError() {
+	r.Status = 500
+	r.Description = "Something went wrong"
+}
+
 type Database struct {
 	Username string
 	Password string
@@ -24,15 +44,6 @@ type Request struct {
 type AuthData struct {
 	Login string `json:"login"`
 	Hash  string `json:"hash"`
-}
-
-type Visit struct {
-	ID        int32  `json:"id"`
-	Active    int8   `json:"active"`
-	StudentID int32  `json:"student_id"`
-	Date      string `json:"date"`
-	Time      string `json:"time"`
-	Type      string `json:"type"`
 }
 
 type Payment struct {

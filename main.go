@@ -17,16 +17,25 @@ import (
 var db *sql.DB
 var ActiveUsers []User
 
+var WrongDataError ResponceError
+var SecurityError ResponceError
+var UnknownError ResponceError
+
+
 func configure() {
 	var err error
 	var database Database
+
+	WrongDataError.WrongDataError()
+	SecurityError.SecurityError()
+	UnknownError.UnknownError()
 
 	// Local database values
 	database.Username = "admin"
 	database.Password = "Zero_twO*Rengyou"
 	database.Database = "robotenok"
 
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	log.SetFlags(log.LstdFlags | log.Llongfile)
 	createDirectory("Logs")
 
 	date := time.Now().Format(time.RFC1123)
@@ -115,10 +124,17 @@ func initHandlers(r *mux.Router) {
 	r.HandleFunc("/robotenok/user/remove", RemoveUser).Methods("POST")
 	r.HandleFunc("/robotenok/user/select", SelectUser).Methods("POST")
 
-	r.HandleFunc("/robotenok/student/add", AddStudent).Methods("POST")
-	r.HandleFunc("/robotenok/student/update", UpdateStudent).Methods("POST")
-	r.HandleFunc("/robotenok/student/remove", RemoveStudent).Methods("POST")
-	r.HandleFunc("/robotenok/student/select", SelectStudent).Methods("POST")
+	r.HandleFunc("/robotenok/students/add", AddStudent).Methods("POST")
+	r.HandleFunc("/robotenok/students/update", UpdateStudent).Methods("POST")
+	r.HandleFunc("/robotenok/students/remove", RemoveStudent).Methods("POST")
+	r.HandleFunc("/robotenok/students/select", SelectStudents).Methods("POST")
+
+	r.HandleFunc("/robotenok/visits/add", AddVisit).Methods("POST")
+	r.HandleFunc("/robotenok/visits/update", UpdateVisit).Methods("POST")
+	r.HandleFunc("/robotenok/visits/remove", RemoveVisit).Methods("POST")
+	r.HandleFunc("/robotenok/visits/select", SelectVisits).Methods("POST")
+
+
 }
 
 func main() {
@@ -135,6 +151,7 @@ func main() {
 	go func() {
 		UserDaemon()
 	}()
+
 
 	err := http.ListenAndServe(":80", r)
 

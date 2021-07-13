@@ -105,6 +105,11 @@ func (s *Students) selectStudents(q Student) error {
 		query += "active = 1"
 	}
 
+	if q.ID != -1 {
+		query += " and id = " + strconv.Itoa(q.ID)
+		isSearch = true
+	}
+
 	if q.Sex != -1 {
 		query += " and sex = " + strconv.Itoa(q.Sex)
 		isSearch = true
@@ -153,186 +158,102 @@ func AddStudent(w http.ResponseWriter, r *http.Request) {
 	var request Request
 	var newStudent Student
 
-	err := requestHandler(&request, r)
+	defer LogHandler("student add")
 
-	if err != nil {
-		SendData(w, 400, "Client send a wrong or empty data")
-		return
-	}
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
 
 	err = request.checkToken()
-
-	if err != nil {
-		SendData(w, 401, err.Error())
-		return
-	}
+	HandleError(err, w, SecurityError)
 
 	err = permCheck(request.UserID, 1)
-	
-	if err != nil {
-		SendData(w, 401, err.Error())
-		return
-	}
+	HandleError(err, w, SecurityError)
 
 	textJson, err := json.Marshal(request.Body)
-
-	if err != nil {
-		SendData(w, 400, err.Error())
-		return
-	}
+	HandleError(err, w, WrongDataError)
 
 	err = json.Unmarshal(textJson, &newStudent)
-
-	if err != nil {
-		SendData(w, 400, err.Error())
-		return
-	}
+	HandleError(err, w, WrongDataError)
 
 	err = newStudent.Add()
-
-	if err !=nil {
-		SendData(w, 500, err.Error())
-	}
+	HandleError(err, w, UnknownError)
 }
 
 func UpdateStudent(w http.ResponseWriter, r *http.Request) {
 	var request Request
 	var updatingStudent Student
 
-	err := requestHandler(&request, r)
+	defer LogHandler("student update")
 
-	if err != nil {
-		SendData(w, 400, "Client send a wrong or empty data")
-		return
-	}
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
 
 	err = request.checkToken()
-
-	if err != nil {
-		SendData(w, 401, err.Error())
-		return
-	}
+	HandleError(err, w, SecurityError)
 
 	err = permCheck(request.UserID, 1)
-
-	if err != nil {
-		SendData(w, 401, err.Error())
-		return
-	}
+	HandleError(err, w, SecurityError)
 
 	textJson, err := json.Marshal(request.Body)
-
-	if err != nil {
-		SendData(w, 400, err.Error())
-		return
-	}
+	HandleError(err, w, WrongDataError)
 
 	err = json.Unmarshal(textJson, &updatingStudent)
-
-	if err != nil {
-		SendData(w, 400, err.Error())
-		return
-	}
+	HandleError(err, w, WrongDataError)
 
 	err = updatingStudent.Update()
-
-	if err != nil {
-		SendData(w, 500, err.Error())
-	}
+	HandleError(err, w, UnknownError)
 }
 
 func RemoveStudent (w http.ResponseWriter, r *http.Request) {
 	var request Request
 	var removingStudent Student
 
-	err := requestHandler(&request, r)
+	defer LogHandler("student remove")
 
-	if err != nil {
-		SendData(w, 400, "Client send a wrong or empty data")
-		return
-	}
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
 
 	err = request.checkToken()
-
-	if err != nil {
-		SendData(w, 401, err.Error())
-		return
-	}
+	HandleError(err, w, SecurityError)
 
 	err = permCheck(request.UserID, 1)
-
-	if err != nil {
-		SendData(w, 401, err.Error())
-		return
-	}
+	HandleError(err, w, SecurityError)
 
 	textJson, err := json.Marshal(request.Body)
-
-	if err != nil {
-		SendData(w, 400, err.Error())
-		return
-	}
+	HandleError(err, w, WrongDataError)
 
 	err = json.Unmarshal(textJson, &removingStudent)
-
-	if err != nil {
-		SendData(w, 400, err.Error())
-		return
-	}
+	HandleError(err, w, WrongDataError)
 
 	err = removingStudent.Remove()
-
-	if err != nil {
-		SendData(w, 500, err.Error())
-	}
+	HandleError(err, w, UnknownError)
 }
 
-func SelectStudent (w http.ResponseWriter, r *http.Request) {
+func SelectStudents (w http.ResponseWriter, r *http.Request) {
 	var request Request
 	var searchedStudent Student
 	var selectedStudents Students
 
-	err := requestHandler(&request, r)
+	defer LogHandler("student select")
 
-	if err != nil {
-		SendData(w, 400, "Client send a wrong or empty data")
-		return
-	}
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
 
 	err = request.checkToken()
-
-	if err != nil {
-		SendData(w, 401, err.Error())
-		return
-	}
+	HandleError(err, w, SecurityError)
 
 	err = permCheck(request.UserID, 1)
-
-	if err != nil {
-		SendData(w, 401, err.Error())
-		return
-	}
+	HandleError(err, w, SecurityError)
 
 	textJson, err := json.Marshal(request.Body)
-
-	if err != nil {
-		SendData(w, 400, err.Error())
-		return
-	}
+	HandleError(err, w, WrongDataError)
 
 	searchedStudent.init()
 	err = json.Unmarshal(textJson, &searchedStudent)
-
-	if err != nil {
-		SendData(w, 400, "Client send a wrong or empty data")
-		return
-	}
+	HandleError(err, w, WrongDataError)
 
 	err = selectedStudents.selectStudents(searchedStudent)
-
-	if err != nil {
-		SendData(w, 500, err.Error())
-	}
+	HandleError(err, w, UnknownError)
 
 	SendData(w, 200, selectedStudents)
 }
