@@ -46,16 +46,6 @@ type AuthData struct {
 	Hash  string `json:"hash"`
 }
 
-type ActiveClasses struct {
-	ID          int    `json:"id"`
-	Active      int    `json:"active"`
-	UserID      int    `json:"user_id"`
-	GroupID     int    `json:"group_id"`
-	Date        string `json:"date"`
-	Time        string `json:"time"`
-	HostAddress string `json:"host_address"`
-}
-
 type ConfirmedDevices struct {
 	ID     int32  `json:"id"`
 	Hash   string `json:"hash"`
