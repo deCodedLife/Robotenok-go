@@ -251,7 +251,7 @@ func RemoveClass(w http.ResponseWriter, r *http.Request) {
 	SendData(w, 200, removingClass)
 }
 
-func SelectClass(w http.ResponseWriter, r *http.Request) {
+func SelectClasses(w http.ResponseWriter, r *http.Request) {
 	var request Request
 	var searchingClass Class
 	var selectedClasses Classes

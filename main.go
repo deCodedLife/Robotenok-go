@@ -61,22 +61,6 @@ func configure() {
 	log.Println("[INFO] [Database] connect successful")
 }
 
-func DataException(w http.ResponseWriter) {
-	var response Response
-	response.Status = 400
-
-	response.Response = map[string]interface{}{
-		"error": "Client send a wrong or empty data",
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(response)
-
-	if err != nil {
-		log.Println("[ERROR] Error during encode data exception.", err.Error())
-	}
-}
-
 func access(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		w.Header().Set("Content-Type", "application/json")
@@ -84,11 +68,10 @@ func access(w http.ResponseWriter, r *http.Request) {
 		var input AuthData
 		var user User
 
-		err := json.NewDecoder(r.Body).Decode(&input)
+		defer LogHandler("access")
 
-		if err != nil {
-			DataException(w)
-		}
+		err := json.NewDecoder(r.Body).Decode(&input)
+		HandleError(err, w, WrongDataError)
 
 		user.Login = input.Login
 		err = user.Select()
@@ -164,24 +147,22 @@ func initHandlers(r *mux.Router) {
 	r.HandleFunc("/robotenok/costs/remove", RemoveCost).Methods("POST")
 	r.HandleFunc("/robotenok/costs/select", SelectCosts).Methods("POST")
 
-
+	r.HandleFunc("/robotenok/classes/add", AddClass).Methods("POST")
+	r.HandleFunc("/robotenok/classes/update", UpdateClass).Methods("POST")
+	r.HandleFunc("/robotenok/claases/remove", RemoveClass).Methods("POST")
+	r.HandleFunc("/robotenok/classes/select", SelectClasses).Methods("POST")
 }
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	configure()
-
 	r := mux.NewRouter()
 
-	/* TODO:
-	* Realize all handlers
-	 */
+	configure()
 	initHandlers(r)
 
 	go func() {
 		UserDaemon()
 	}()
-
 
 	err := http.ListenAndServe(":80", r)
 
