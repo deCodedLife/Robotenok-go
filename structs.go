@@ -46,15 +46,6 @@ type AuthData struct {
 	Hash  string `json:"hash"`
 }
 
-type Course struct {
-	ID      int    `json:"id"`
-	Active  int    `json:"active"`
-	Name    string `json:"name"`
-	Payment int    `json:"payment"`
-	Lessons int    `json:"lessons"`
-	Image   string `json:"image"`
-}
-
 type CourseGroups struct {
 	ID       int `json:"id"`
 	CourseID int `json:"course_id"`
