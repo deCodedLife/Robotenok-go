@@ -227,6 +227,231 @@ func SelectGroupTypes(w http.ResponseWriter, r *http.Request) {
 	SendData(w, 200, selectedGroupTypes)
 }
 
+type GroupStudent struct {
+	ID        int `json:"id"`
+	Active    int `json:"active"`
+	GroupID   int `json:"group_id"`
+	StudentID int `json:"student_id"`
+}
+
+func (g GroupStudent) Init() {
+	g.ID = -1
+	g.Active = -1
+	g.GroupID = -1
+	g.StudentID = -1
+}
+
+func (g GroupStudent) Add() error {
+	var query string
+
+	query = "insert into robotenok.group_students (group_id, student_id) values (?, ?)"
+	_, err := db.Exec(query)
+
+	return err
+}
+
+func (g GroupStudent) Update() error {
+	if g.ID == -1 {
+		return errors.New("group students id has wrong data")
+	}
+
+	var query string
+	var isFirst bool
+
+	// Wrote it separately because goland marked it as error -_(O_O|)_-
+	query = "update robotenok.group_students" + " set "
+	isFirst = true
+
+	if g.GroupID != -1 {
+		query += " group_id = " + strconv.Itoa(g.GroupID)
+		isFirst = false
+	}
+
+	if g.StudentID != -1 {
+		if isFirst == false {
+			query += ","
+		}
+
+		query += " student_id = " + strconv.Itoa(g.StudentID)
+		isFirst = false
+	}
+
+	query += " where id = " + strconv.Itoa(g.ID)
+
+	_, err := db.Exec(query)
+	return err
+}
+
+func (g *GroupStudent) Remove() error {
+	g.Active = 0
+	return g.Update()
+}
+
+type GroupStudents struct {
+	GroupStudents []GroupStudent `json:"groups_students"`
+}
+
+func (g *GroupStudents) Select(q GroupStudent) error {
+	var query string
+	var isSearch bool
+
+	isSearch = false
+	query = "select * from robotenok.group_students" + " where "
+
+	if q.Active != -1 {
+		query += "active = " + strconv.Itoa(q.Active)
+		isSearch = true
+	} else {
+		query += "active = 1"
+	}
+
+	if q.ID != -1 {
+		query += " and id = " + strconv.Itoa(q.ID)
+		isSearch = true
+	}
+
+	if q.GroupID != -1 {
+		query += " and group_id = " + strconv.Itoa(q.GroupID)
+		isSearch = true
+	}
+
+	if q.StudentID != -1 {
+		query += " and student_id = " + strconv.Itoa(q.StudentID)
+		isSearch = true
+	}
+
+	if isSearch == false {
+		return errors.New("nothing to do")
+	}
+
+	row, err := db.Query(query)
+
+	if err != nil {
+		return err
+	}
+
+	for row.Next() {
+		t := GroupStudent{}
+		err := row.Scan(&t.ID, &t.Active, &t.GroupID, &t.StudentID)
+
+		if err != nil {
+			return err
+		}
+
+		g.GroupStudents = append(g.GroupStudents, t)
+	}
+
+	return nil
+}
+
+func AddGroupStudent(w http.ResponseWriter, r *http.Request) {
+	var request Request
+	var newGroupStudent GroupStudent
+
+	defer LogHandler("group student add")
+
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
+
+	err = request.checkToken()
+	HandleError(err, w, SecurityError)
+
+	err = permCheck(request.UserID, 1)
+	HandleError(err, w, SecurityError)
+
+	textJson, err := json.Marshal(request.Body)
+	HandleError(err, w, WrongDataError)
+
+	err = json.Unmarshal(textJson, &newGroupStudent)
+	HandleError(err, w, WrongDataError)
+
+	err = newGroupStudent.Add()
+	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, newGroupStudent)
+}
+
+func UpdateGroupStudent(w http.ResponseWriter, r *http.Request) {
+	var request Request
+	var updatingGroupStudent GroupStudent
+
+	defer LogHandler("group student update")
+
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
+
+	err = request.checkToken()
+	HandleError(err, w, SecurityError)
+
+	err = permCheck(request.UserID, 1)
+	HandleError(err, w, SecurityError)
+
+	textJson, err := json.Marshal(request.Body)
+	HandleError(err, w, WrongDataError)
+
+	updatingGroupStudent.Init()
+	err = json.Unmarshal(textJson, &updatingGroupStudent)
+	HandleError(err, w, WrongDataError)
+
+	err = updatingGroupStudent.Update()
+	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, updatingGroupStudent)
+}
+
+func RemoveGroupStudent(w http.ResponseWriter, r *http.Request) {
+	var request Request
+	var removingGroupStudent GroupStudent
+
+	defer LogHandler("group student remove")
+
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
+
+	err = request.checkToken()
+	HandleError(err, w, SecurityError)
+
+	err = permCheck(request.UserID, 1)
+	HandleError(err, w, SecurityError)
+
+	textJson, err := json.Marshal(request.Body)
+	HandleError(err, w, WrongDataError)
+
+	err = json.Unmarshal(textJson, &removingGroupStudent)
+	HandleError(err, w, WrongDataError)
+
+	err = removingGroupStudent.Remove()
+	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, removingGroupStudent)
+}
+
+func SelectGroupStudents(w http.ResponseWriter, r *http.Request) {
+	var request Request
+	var searchingGroupStudent GroupStudent
+	var selectedGroupStudents GroupStudents
+
+	defer LogHandler("group students select")
+
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
+
+	err = request.checkToken()
+	HandleError(err, w, SecurityError)
+
+	textJson, err := json.Marshal(request.Body)
+	HandleError(err, w, WrongDataError)
+
+	searchingGroupStudent.Init()
+	err = json.Unmarshal(textJson, &searchingGroupStudent)
+	HandleError(err, w, WrongDataError)
+
+	err = selectedGroupStudents.Select(searchingGroupStudent)
+	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, selectedGroupStudents)
+}
+
 type Group struct {
 	ID        int  `json:"id"`
 	Active    int   `json:"active"`
