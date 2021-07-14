@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
+	"net/http"
 	"strconv"
 )
 
@@ -154,3 +156,113 @@ func (c *Courses) Select(q Course) error {
 	return nil
 }
 
+func AddCourse(w http.ResponseWriter, r *http.Request) {
+	var request Request
+	var newCourse Course
+
+	defer LogHandler("course add")
+
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
+
+	err = request.checkToken()
+	HandleError(err, w, SecurityError)
+
+	err = permCheck(request.UserID, 1)
+	HandleError(err, w, SecurityError)
+
+	textJson, err := json.Marshal(request.Body)
+	HandleError(err, w, WrongDataError)
+
+	err = json.Unmarshal(textJson, &newCourse)
+	HandleError(err, w, WrongDataError)
+
+	err = newCourse.Add()
+	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, newCourse)
+}
+
+func UpdateCourse(w http.ResponseWriter, r * http.Request) {
+	var request Request
+	var updatingCourse Course
+
+	defer LogHandler("course update")
+
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
+
+	err = request.checkToken()
+	HandleError(err, w, SecurityError)
+
+	err = permCheck(request.UserID, 1)
+	HandleError(err, w, SecurityError)
+
+	textJson, err := json.Marshal(request.Body)
+	HandleError(err, w, WrongDataError)
+
+	updatingCourse.Init()
+	err = json.Unmarshal(textJson, &updatingCourse)
+	HandleError(err, w, WrongDataError)
+
+	err = updatingCourse.Update()
+	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, updatingCourse)
+}
+
+func RemoveCourse(w http.ResponseWriter, r *http.Request) {
+	var request Request
+	var removingCourse Course
+
+	defer LogHandler("course remove")
+
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
+
+	err = request.checkToken()
+	HandleError(err, w, SecurityError)
+
+	err = permCheck(request.UserID, 1)
+	HandleError(err, w, SecurityError)
+
+	textJson, err := json.Marshal(request.Body)
+	HandleError(err, w, WrongDataError)
+
+	err = json.Unmarshal(textJson, &removingCourse)
+	HandleError(err, w, WrongDataError)
+
+	err = removingCourse.Remove()
+	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, removingCourse)
+}
+
+func SelectCourses(w http.ResponseWriter, r *http.Request) {
+	var request Request
+	var searchingCourse Course
+	var selectedCourses Courses
+
+	defer LogHandler("courses select")
+
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
+
+	err = request.checkToken()
+	HandleError(err, w, SecurityError)
+
+	err = permCheck(request.UserID, 1)
+	HandleError(err, w, SecurityError)
+
+	textJson, err := json.Marshal(request.Body)
+	HandleError(err, w, WrongDataError)
+
+	searchingCourse.Init()
+	err = json.Unmarshal(textJson, &searchingCourse)
+	HandleError(err, w, WrongDataError)
+
+	err = selectedCourses.Select(searchingCourse)
+	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, selectedCourses)
+}
