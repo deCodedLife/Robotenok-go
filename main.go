@@ -144,6 +144,11 @@ func initHandlers(r *mux.Router) {
 	r.HandleFunc("/robotenok/groups/remove", RemoveGroup).Methods("POST")
 	r.HandleFunc("/robotenok/groups/select", SelectGroups).Methods("POST")
 
+	r.HandleFunc("/robotenok/payments/add", AddPayment).Methods("POST")
+	r.HandleFunc("/robotenok/payments/update", UpdatePayment).Methods("POST")
+	r.HandleFunc("/robotenok/payments/remove", RemovePayment).Methods("POST")
+	r.HandleFunc("/robotenok/payments/select", SelectPayments).Methods("POST")
+
 
 }
 

@@ -16,7 +16,7 @@ type Student struct {
 	Sex     int    `json:"sex"`
 }
 
-func (s *Student) init() {
+func (s *Student) Init() {
 	s.ID = -1
 	s.Active = -1
 	s.Sex = -1
@@ -44,7 +44,7 @@ func (s Student) Update() error {
 	isFirst = true
 
 	if s.Name != "" {
-		query += "name = " + s.Name
+		query += " name like %" + s.Name + "%"
 		isFirst = false
 	}
 
@@ -53,7 +53,7 @@ func (s Student) Update() error {
 			query += ","
 		}
 
-		query += "phone = " + s.Phone
+		query += " phone like %" + s.Phone + "%"
 		isFirst = false
 	}
 
@@ -62,7 +62,7 @@ func (s Student) Update() error {
 			query += ","
 		}
 
-		query += "parents = " + s.Parents
+		query += " parents = " + s.Parents
 		isFirst = false
 	}
 
@@ -71,7 +71,7 @@ func (s Student) Update() error {
 			query += ","
 		}
 
-		query += "sex = " + strconv.Itoa(s.Sex)
+		query += " sex = " + strconv.Itoa(s.Sex)
 		isFirst = false
 	}
 
@@ -199,6 +199,7 @@ func UpdateStudent(w http.ResponseWriter, r *http.Request) {
 	textJson, err := json.Marshal(request.Body)
 	HandleError(err, w, WrongDataError)
 
+	updatingStudent.Init()
 	err = json.Unmarshal(textJson, &updatingStudent)
 	HandleError(err, w, WrongDataError)
 
@@ -254,7 +255,7 @@ func SelectStudents (w http.ResponseWriter, r *http.Request) {
 	textJson, err := json.Marshal(request.Body)
 	HandleError(err, w, WrongDataError)
 
-	searchingStudent.init()
+	searchingStudent.Init()
 	err = json.Unmarshal(textJson, &searchingStudent)
 	HandleError(err, w, WrongDataError)
 

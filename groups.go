@@ -161,6 +161,7 @@ func UpdateGroupType(w http.ResponseWriter, r *http.Request) {
 	textJson, err := json.Marshal(request.Body)
 	HandleError(err, w, WrongDataError)
 
+	updatingGroupType.Init()
 	err = json.Unmarshal(textJson, &updatingGroupType)
 	HandleError(err, w, WrongDataError)
 

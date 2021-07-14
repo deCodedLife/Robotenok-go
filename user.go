@@ -22,7 +22,7 @@ type User struct {
 	Online   time.Time
 }
 
-func (u *User) init() {
+func (u *User) Init() {
 	u.ID = -1
 }
 
@@ -245,6 +245,7 @@ func UpdateUser (w http.ResponseWriter, r *http.Request) {
 	textJson, err := json.Marshal(request.Body)
 	HandleError(err, w, WrongDataError)
 
+	updateUser.Init()
 	err = json.Unmarshal(textJson, &updateUser)
 	HandleError(err, w, WrongDataError)
 

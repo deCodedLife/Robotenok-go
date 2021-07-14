@@ -16,7 +16,7 @@ type Visit struct {
 	Type      string `json:"type"`
 }
 
-func (v *Visit) init() {
+func (v *Visit) Init() {
 	v.ID = -1
 	v.Active = -1
 	v.StudentID = -1
@@ -210,6 +210,7 @@ func UpdateVisit(w http.ResponseWriter, r *http.Request) {
 	textJson, err := json.Marshal(request.Body)
 	HandleError(err, w, WrongDataError)
 
+	updatingVisit.Init()
 	err = json.Unmarshal(textJson, &updatingVisit)
 	HandleError(err, w, WrongDataError)
 
@@ -265,7 +266,7 @@ func SelectVisits(w http.ResponseWriter, r *http.Request) {
 	textJson, err := json.Marshal(request.Body)
 	HandleError(err, w, WrongDataError)
 
-	searcherVisits.init()
+	searcherVisits.Init()
 	err = json.Unmarshal(textJson, &searcherVisits)
 	HandleError(err, w, WrongDataError)
 
