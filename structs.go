@@ -46,15 +46,6 @@ type AuthData struct {
 	Hash  string `json:"hash"`
 }
 
-type Cost struct {
-	ID      int    `json:"id"`
-	Active  int    `json:"active"`
-	Product string `json:"product"`
-	Cost    int    `json:"cost"`
-	Date    string `json:"date"`
-	Time    string `json:"time"`
-}
-
 type ActiveClasses struct {
 	ID          int    `json:"id"`
 	Active      int    `json:"active"`
