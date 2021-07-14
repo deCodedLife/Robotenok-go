@@ -188,6 +188,8 @@ func AddVisit(w http.ResponseWriter, r *http.Request) {
 
 	err = newVisit.Add()
 	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, newVisit)
 }
 
 func UpdateVisit(w http.ResponseWriter, r *http.Request) {
@@ -213,6 +215,8 @@ func UpdateVisit(w http.ResponseWriter, r *http.Request) {
 
 	err = updatingVisit.Update()
 	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, updatingVisit)
 }
 
 func RemoveVisit(w http.ResponseWriter, r *http.Request) {
@@ -238,6 +242,8 @@ func RemoveVisit(w http.ResponseWriter, r *http.Request) {
 
 	err = removingVisit.Remove()
 	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, removingVisit)
 }
 
 func SelectVisits(w http.ResponseWriter, r *http.Request) {

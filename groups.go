@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
+	"net/http"
 	"strconv"
 )
 
@@ -114,7 +116,115 @@ func (g* GroupTypes) Select(q GroupType) error {
 	return nil
 }
 
+func AddGroupType(w http.ResponseWriter, r *http.Request) {
+	var request Request
+	var newGroupType GroupType
 
+	defer LogHandler("grouptype add")
+
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
+
+	err = request.checkToken()
+	HandleError(err, w, SecurityError)
+
+	err = permCheck(request.UserID, 1)
+	HandleError(err, w, SecurityError)
+
+	textJson, err := json.Marshal(request.Body)
+	HandleError(err, w, WrongDataError)
+
+	err = json.Unmarshal(textJson, &newGroupType)
+	HandleError(err, w, WrongDataError)
+
+	err = newGroupType.Add()
+	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, newGroupType)
+}
+
+func UpdateGroupType(w http.ResponseWriter, r *http.Request) {
+	var request Request
+	var updatingGroupType GroupType
+
+	defer LogHandler("grouptype update")
+
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
+
+	err = request.checkToken()
+	HandleError(err, w, SecurityError)
+
+	err = permCheck(request.UserID, 1)
+	HandleError(err, w, SecurityError)
+
+	textJson, err := json.Marshal(request.Body)
+	HandleError(err, w, WrongDataError)
+
+	err = json.Unmarshal(textJson, &updatingGroupType)
+	HandleError(err, w, WrongDataError)
+
+	err = updatingGroupType.Update()
+	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, updatingGroupType)
+}
+
+func RemoveGroupType(w http.ResponseWriter, r *http.Request) {
+	var request Request
+	var removingGroupType GroupType
+
+	defer LogHandler("grouptype remove")
+
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
+
+	err = request.checkToken()
+	HandleError(err, w, SecurityError)
+
+	err = permCheck(request.UserID, 1)
+	HandleError(err, w, SecurityError)
+
+	textJson, err := json.Marshal(request.Body)
+	HandleError(err, w, WrongDataError)
+
+	err = json.Unmarshal(textJson, &removingGroupType)
+	HandleError(err, w, WrongDataError)
+
+	removingGroupType.Remove()
+	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, removingGroupType)
+}
+
+func SelectGroupTypes(w http.ResponseWriter, r *http.Request) {
+	var request Request
+	var searchingGroupType GroupType
+	var selectedGroupTypes GroupTypes
+
+	defer LogHandler("grouptype select")
+
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
+
+	err = request.checkToken()
+	HandleError(err, w, SecurityError)
+
+	err = permCheck(request.UserID, 1)
+	HandleError(err, w, SecurityError)
+
+	textJson, err := json.Marshal(request.Body)
+	HandleError(err, w, WrongDataError)
+
+	searchingGroupType.Init()
+	err = json.Unmarshal(textJson, &searchingGroupType)
+	HandleError(err, w, WrongDataError)
+
+	err = selectedGroupTypes.Select(searchingGroupType)
+	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, selectedGroupTypes)
+}
 
 type Group struct {
 	ID        int  `json:"id"`
@@ -287,4 +397,111 @@ func (g *Groups) Select(q Group) error {
 	}
 
 	return nil
+}
+
+func AddGroup(w http.ResponseWriter, r *http.Request) {
+	var request Request
+	var newGroup Group
+
+	defer LogHandler("group add")
+
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
+
+	err = request.checkToken()
+	HandleError(err, w, SecurityError)
+
+	err = permCheck(request.UserID, 1)
+	HandleError(err, w, SecurityError)
+
+	textJson, err := json.Marshal(request.Body)
+	HandleError(err, w, WrongDataError)
+
+	err = json.Unmarshal(textJson, &newGroup)
+	HandleError(err, w, WrongDataError)
+
+	err = newGroup.Add()
+	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, newGroup)
+}
+
+func UpdateGroup(w http.ResponseWriter, r *http.Request) {
+	var request Request
+	var updatingGroup Group
+
+	defer LogHandler("group update")
+
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
+
+	err = request.checkToken()
+	HandleError(err, w, SecurityError)
+
+	err = permCheck(request.UserID, 1)
+	HandleError(err, w, SecurityError)
+
+	textJson, err := json.Marshal(request.Body)
+	HandleError(err, w, WrongDataError)
+
+	err = json.Unmarshal(textJson, &updatingGroup)
+	HandleError(err, w, WrongDataError)
+
+	err = updatingGroup.Update()
+	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, updatingGroup)
+}
+
+func RemoveGroup(w http.ResponseWriter, r *http.Request) {
+	var request Request
+	var removingGroup Group
+
+	defer LogHandler("group remove")
+
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
+
+	err = request.checkToken()
+	HandleError(err, w, SecurityError)
+
+	err = permCheck(request.UserID, 1)
+	HandleError(err, w, SecurityError)
+
+	textJson, err := json.Marshal(request.Body)
+	HandleError(err, w, WrongDataError)
+
+	err = json.Unmarshal(textJson, &removingGroup)
+	HandleError(err, w, WrongDataError)
+
+	err = removingGroup.Remove()
+	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, removingGroup)
+}
+
+func SelectGroups(w http.ResponseWriter, r *http.Request) {
+	var request Request
+	var searchingGroup Group
+	var selectedGroups Groups
+
+	defer LogHandler("groups select")
+
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
+
+	err = request.checkToken()
+	HandleError(err, w, SecurityError)
+
+	textJson, err := json.Marshal(request.Body)
+	HandleError(err, w, WrongDataError)
+
+	searchingGroup.Init()
+	err = json.Unmarshal(textJson, &searchingGroup)
+	HandleError(err, w, WrongDataError)
+
+	err = selectedGroups.Select(searchingGroup)
+	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, selectedGroups)
 }

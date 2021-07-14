@@ -226,6 +226,8 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 
 	err = newUser.Add(device)
 	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, newUser)
 }
 
 func UpdateUser (w http.ResponseWriter, r *http.Request) {
@@ -253,6 +255,8 @@ func UpdateUser (w http.ResponseWriter, r *http.Request) {
 
 	err = updateUser.Update()
 	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, updateUser)
 }
 
 func RemoveUser (w http.ResponseWriter, r *http.Request) {
@@ -278,6 +282,8 @@ func RemoveUser (w http.ResponseWriter, r *http.Request) {
 
 	err = removingUser.Remove()
 	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, removingUser)
 }
 
 func SelectUser(w http.ResponseWriter, r *http.Request) {

@@ -177,6 +177,8 @@ func AddStudent(w http.ResponseWriter, r *http.Request) {
 
 	err = newStudent.Add()
 	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, newStudent)
 }
 
 func UpdateStudent(w http.ResponseWriter, r *http.Request) {
@@ -202,6 +204,8 @@ func UpdateStudent(w http.ResponseWriter, r *http.Request) {
 
 	err = updatingStudent.Update()
 	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, updatingStudent)
 }
 
 func RemoveStudent (w http.ResponseWriter, r *http.Request) {
@@ -227,11 +231,13 @@ func RemoveStudent (w http.ResponseWriter, r *http.Request) {
 
 	err = removingStudent.Remove()
 	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, removingStudent)
 }
 
 func SelectStudents (w http.ResponseWriter, r *http.Request) {
 	var request Request
-	var searchedStudent Student
+	var searchingStudent Student
 	var selectedStudents Students
 
 	defer LogHandler("student select")
@@ -248,11 +254,11 @@ func SelectStudents (w http.ResponseWriter, r *http.Request) {
 	textJson, err := json.Marshal(request.Body)
 	HandleError(err, w, WrongDataError)
 
-	searchedStudent.init()
-	err = json.Unmarshal(textJson, &searchedStudent)
+	searchingStudent.init()
+	err = json.Unmarshal(textJson, &searchingStudent)
 	HandleError(err, w, WrongDataError)
 
-	err = selectedStudents.selectStudents(searchedStudent)
+	err = selectedStudents.selectStudents(searchingStudent)
 	HandleError(err, w, UnknownError)
 
 	SendData(w, 200, selectedStudents)

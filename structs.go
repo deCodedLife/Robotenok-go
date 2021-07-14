@@ -1,7 +1,7 @@
 package main
 
 type ResponceError struct {
-	Status int32
+	Status      int32
 	Description string
 }
 
@@ -46,46 +46,45 @@ type AuthData struct {
 	Hash  string `json:"hash"`
 }
 
-type Payment struct {
-	ID        int32  `json:"id"`
-	Active    string `json:"active"`
-	Date      string `json:"date"`
-	Time      string `json:"time"`
-	StudentID string `json:"student_id"`
-	Credit    int32  `json:"credit"`
-	Type      string `json:"type"`
-	UserID    int32  `json:"user_id"`
-}
-
 type GroupStudents struct {
-	ID        int32 `json:"id"`
-	Active    int8  `json:"active"`
-	GroupID   int32 `json:"group_id"`
-	StudentID int32 `json:"student_id"`
+	ID        int `json:"id"`
+	Active    int `json:"active"`
+	GroupID   int `json:"group_id"`
+	StudentID int `json:"student_id"`
 }
 
 type Course struct {
-	ID      int32  `json:"id"`
-	Active  int8   `json:"active"`
+	ID      int    `json:"id"`
+	Active  int    `json:"active"`
 	Name    string `json:"name"`
-	Payment int32  `json:"payment"`
-	Lessons int8   `json:"lessons"`
+	Payment int    `json:"payment"`
+	Lessons int    `json:"lessons"`
 	Image   string `json:"image"`
 }
 
 type CourseGroups struct {
-	ID       int32 `json:"id"`
-	CourseID int32 `json:"course_id"`
-	GroupID  int32 `json:"group_id"`
+	ID       int `json:"id"`
+	CourseID int `json:"course_id"`
+	GroupID  int `json:"group_id"`
 }
 
 type Cost struct {
-	ID      int32  `json:"id"`
-	Active  int8   `json:"active"`
+	ID      int    `json:"id"`
+	Active  int    `json:"active"`
 	Product string `json:"product"`
-	Cost    int8   `json:"cost"`
+	Cost    int    `json:"cost"`
 	Date    string `json:"date"`
 	Time    string `json:"time"`
+}
+
+type ActiveClasses struct {
+	ID          int    `json:"id"`
+	Active      int    `json:"active"`
+	UserID      int    `json:"user_id"`
+	GroupID     int    `json:"group_id"`
+	Date        string `json:"date"`
+	Time        string `json:"time"`
+	HostAddress string `json:"host_address"`
 }
 
 type ConfirmedDevices struct {
