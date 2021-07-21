@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"html/template"
 	"net/http"
 	"strconv"
 )
@@ -27,9 +28,23 @@ func (c *Cost) Init() {
 
 func (c Cost) Add() error {
 	var query string
+	var queryValues []interface{}
+
+	queryValues = append(queryValues, c.Product)
+	queryValues = append(queryValues, c.Cost)
+	queryValues = append(queryValues, GetDate())
+	queryValues = append(queryValues, GetTime())
 
 	query = "insert into robotenok.costs (product, cost, date, time) values (?, ?, ?, ?)"
-	_, err := db.Exec(query, c.Product, c.Cost, GetDate(), GetTime())
+
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(queryValues...)
 
 	return err
 }
@@ -41,13 +56,14 @@ func (c Cost) Update() error {
 
 	var query string
 	var isFirst bool
+	var queryValues []interface{}
 
-	// Wrote it separately because goland marked it as error -_(O_O|)_-
+	// Wrote it separately because goland marks it as error -_(O_O|)_-
 	query = "update robotenok.costs" + " set "
 	isFirst = true
 
 	if c.Product != "" {
-		query += " product like %" + c.Product + "%"
+		query += " product like '%" + template.HTMLEscapeString(c.Product) + "%'"
 		isFirst = false
 	}
 
@@ -56,7 +72,8 @@ func (c Cost) Update() error {
 			query += ","
 		}
 
-		query += " active = " + strconv.Itoa(c.Active)
+		query += " active = ?"
+		queryValues = append(queryValues, c.Active)
 		isFirst = false
 	}
 
@@ -65,7 +82,8 @@ func (c Cost) Update() error {
 			query += ","
 		}
 
-		query += " cost = " + strconv.Itoa(c.Cost)
+		query += " cost = ?"
+		queryValues = append(queryValues, c.Cost)
 		isFirst = false
 	}
 
@@ -74,7 +92,8 @@ func (c Cost) Update() error {
 			query += ","
 		}
 
-		query += " date = " + c.Date
+		query += " date = ?"
+		queryValues = append(queryValues, c.Date)
 		isFirst = false
 	}
 
@@ -83,13 +102,22 @@ func (c Cost) Update() error {
 			query += ","
 		}
 
-		query += " time = " + c.Time
+		query += " time = ?"
+		queryValues = append(queryValues, c.Time)
 		isFirst = false
 	}
 
 	query += " where id = " + strconv.Itoa(c.ID)
 
-	_, err := db.Exec(query)
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(queryValues...)
+
 	return err
 }
 
@@ -104,39 +132,45 @@ type Costs struct {
 func (c *Costs) Select(q Cost) error {
 	var query string
 	var isSearch bool
+	var queryValues []interface{}
 
 	isSearch = false
 	query = "select * from robotenok.costs" + " where "
 
 	if q.Active != -1 {
-		query += "active = " + strconv.Itoa(q.Active)
+		query += "active = ?"
+		queryValues = append(queryValues, q.Active)
 		isSearch = true
 	} else {
 		query += "active = 1"
 	}
 
 	if q.ID != -1 {
-		query += " and id = " + strconv.Itoa(q.ID)
+		query += " and id = ?"
+		queryValues = append(queryValues, q.ID)
 		isSearch = true
 	}
 
 	if q.Product != "" {
-		query += " and product like %" + q.Product + "%"
+		query += " and product like '%" + template.HTMLEscapeString(q.Product) + "%'"
 		isSearch = true
 	}
 
 	if q.Cost != -1 {
-		query += " and cost = " + strconv.Itoa(q.Cost)
+		query += " and cost = ?"
+		queryValues = append(queryValues, q.Cost)
 		isSearch = true
 	}
 
 	if q.Date != "" {
-		query += " and date = " + q.Date
+		query += " and date = ?"
+		queryValues = append(queryValues, q.Date)
 		isSearch = true
 	}
 
 	if q.Time != "" {
-		query += " and time = " + q.Time
+		query += " and time = ?"
+		queryValues = append(queryValues, q.Time)
 		isSearch = true
 	}
 
@@ -144,7 +178,14 @@ func (c *Costs) Select(q Cost) error {
 		return errors.New("nothing to do")
 	}
 
-	row, err := db.Query(query)
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	row, err := stmt.Query(queryValues...)
 
 	if err != nil {
 		return err

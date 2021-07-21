@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"html/template"
 	"net/http"
-	"strconv"
 )
 
 type Course struct {
@@ -27,9 +27,23 @@ func (c Course) Init() {
 
 func (c Course) Add() error {
 	var query string
+	var queryValues []interface{}
+
+	queryValues = append(queryValues, c.Name)
+	queryValues = append(queryValues, c.Payment)
+	queryValues = append(queryValues, c.Lessons)
+	queryValues = append(queryValues, c.Image)
 
 	query = "insert into robotenok.courses (name, payment, lessons, image) values (?, ?, ?, ?)"
-	_, err := db.Exec(query, c.Name, c.Payment, c.Lessons, c.Image)
+
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(queryValues...)
 
 	return err
 }
@@ -41,13 +55,14 @@ func (c Course) Update() error {
 
 	var query string
 	var isFirst bool
+	var queryValues []interface{}
 
 	// Wrote it separately because goland marked it as error -_(O_O|)_-
 	query = "update robotenok.courses" + " set "
 	isFirst = true
 
 	if c.Name != "" {
-		query += " name like %" + c.Name + "%"
+		query += " name like %" + template.HTMLEscapeString(c.Name) + "%"
 		isFirst = false
 	}
 
@@ -56,7 +71,8 @@ func (c Course) Update() error {
 			query += ","
 		}
 
-		query += " payment = " + strconv.Itoa(c.Payment)
+		query += " payment = ?"
+		queryValues = append(queryValues, c.Payment)
 		isFirst = false
 	}
 
@@ -65,7 +81,8 @@ func (c Course) Update() error {
 			query += ","
 		}
 
-		query += " lessons = " + strconv.Itoa(c.Lessons)
+		query += " lessons = ?"
+		queryValues = append(queryValues, c.Lessons)
 		isFirst = false
 	}
 
@@ -74,13 +91,23 @@ func (c Course) Update() error {
 			query += ","
 		}
 
-		query += " image = " + c.Image
+		query += " image = ?"
+		queryValues = append(queryValues, c.Image)
 		isFirst = false
 	}
 
-	query += " where id = " + strconv.Itoa(c.ID)
+	// JetBrains marks: "where id = ?" as error
+	query += " where id = " + "?"
+	queryValues = append(queryValues, c.ID)
 
-	_, err := db.Exec(query)
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(queryValues...)
 	return err
 }
 
@@ -96,39 +123,45 @@ type Courses struct {
 func (c *Courses) Select(q Course) error {
 	var query string
 	var isSearch bool
+	var queryValues []interface{}
 
 	isSearch = false
 	query = "select * from robotenok.students" + " where "
 
 	if q.Active != -1 {
-		query += "active = " + strconv.Itoa(q.Active)
+		query += "active = ?"
+		queryValues = append(queryValues, q.Active)
 		isSearch = true
 	} else {
 		query += "active = 1"
 	}
 
 	if q.ID != -1 {
-		query += " and id = " + strconv.Itoa(q.ID)
+		query += " and id = ?"
+		queryValues = append(queryValues, q.ID)
 		isSearch = true
 	}
 
 	if q.Name != "" {
-		query += " and name like %" + q.Name + "%"
+		query += " and name like '%" + template.HTMLEscapeString(q.Name) + "%'"
 		isSearch = true
 	}
 
 	if q.Payment != -1 {
-		query += " and payment = " + strconv.Itoa(q.Payment)
+		query += " and payment = ?"
+		queryValues = append(queryValues, q.Payment)
 		isSearch = true
 	}
 
 	if q.Lessons != -1 {
-		query += " and lessons = " + strconv.Itoa(q.Lessons)
+		query += " and lessons = ?"
+		queryValues = append(queryValues, q.Lessons)
 		isSearch = true
 	}
 
 	if q.Image != "" {
-		query += " and image = " + q.Image
+		query += " and image = ?"
+		queryValues = append(queryValues, q.Image)
 		isSearch = true
 	}
 
@@ -136,7 +169,14 @@ func (c *Courses) Select(q Course) error {
 		return errors.New("nothing to do")
 	}
 
-	row, err := db.Query(query)
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	row, err := stmt.Query(queryValues...)
 
 	if err != nil {
 		return err
@@ -283,9 +323,17 @@ func (c *CourseGroup) Init() {
 
 func (c CourseGroup) Add() error {
 	var query string
+	var queryValues []interface{}
 
-	query = "insert into robotenok.courses_groups (course_id, group_id) values (?, ?)"
-	_, err := db.Exec(query, c.GroupID, c.GroupID)
+	queryValues = append(queryValues, c.GroupID)
+	queryValues = append(queryValues, c.GroupID)
+
+	query = "insert into robotenok.course_groups (course_id, group_id) values (?, ?)"
+
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	_, err = stmt.Exec(queryValues...)
 
 	return err
 }
@@ -297,13 +345,15 @@ func (c CourseGroup) Update() error {
 
 	var query string
 	var isFirst bool
+	var queryValues []interface{}
 
 	// Wrote it separately because goland marked it as error -_(O_O|)_-
 	query = "update robotenok.course_groups" + " set "
 	isFirst = true
 
 	if c.CourseID != -1 {
-		query += " course_id = " + strconv.Itoa(c.CourseID)
+		query += " course_id = ?"
+		queryValues = append(queryValues, c.CourseID)
 		isFirst = false
 	}
 
@@ -312,7 +362,8 @@ func (c CourseGroup) Update() error {
 			query += ","
 		}
 
-		query += " group_id = " + strconv.Itoa(c.GroupID)
+		query += " group_id = ?"
+		queryValues = append(queryValues, c.GroupID)
 		isFirst = false
 	}
 
@@ -321,12 +372,23 @@ func (c CourseGroup) Update() error {
 			query += ","
 		}
 
-		query += " active = " + strconv.Itoa(c.Active)
+		query += " active = ?"
+		queryValues = append(queryValues, c.Active)
 	}
 
-	query += " where id = " + strconv.Itoa(c.ID)
+	// JetBrains marks: "where id = ?" as error
+	query += " where id = " + "?"
+	queryValues = append(queryValues, c.ID)
 
-	_, err := db.Exec(query)
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(queryValues...)
+
 	return err
 }
 
@@ -342,29 +404,34 @@ type CourseGroups struct {
 func (c *CourseGroups) Select(q CourseGroup) error {
 	var query string
 	var isSearch bool
+	var queryValues []interface{}
 
 	isSearch = false
 	query = "select * from robotenok.course_groups" + " where "
 
 	if q.Active != -1 {
-		query += "active = " + strconv.Itoa(q.Active)
+		query += "active = ?"
+		queryValues = append(queryValues, q.Active)
 		isSearch = true
 	} else {
 		query += "active = 1"
 	}
 
 	if q.ID != -1 {
-		query += " and id = " + strconv.Itoa(q.ID)
+		query += " and id = ?"
+		queryValues = append(queryValues, q.ID)
 		isSearch = true
 	}
 
 	if q.CourseID != -1 {
-		query += " and course_id = " + strconv.Itoa(q.CourseID)
+		query += " and course_id = ?"
+		queryValues = append(queryValues, q.CourseID)
 		isSearch = true
 	}
 
 	if q.GroupID != -1 {
-		query += " group_id = " + strconv.Itoa(q.GroupID)
+		query += " group_id = ?"
+		queryValues = append(queryValues, q.GroupID)
 		isSearch = true
 	}
 
@@ -372,7 +439,14 @@ func (c *CourseGroups) Select(q CourseGroup) error {
 		return errors.New("nothing to do")
 	}
 
-	row, err := db.Query(query)
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	row, err := stmt.Query(queryValues)
 
 	if err != nil {
 		return err

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strconv"
 )
 
 type Visit struct {
@@ -27,9 +26,23 @@ func (v *Visit) Init() {
 
 func (v Visit) Add() error {
 	var query string
+	var queryValues []interface{}
+
+	queryValues = append(queryValues, v.StudentID)
+	queryValues = append(queryValues, GetDate())
+	queryValues = append(queryValues, GetTime())
+	queryValues = append(queryValues, v.Type)
 
 	query = "insert into robotenok.visits (student_id, date, time, type) values (?, ?, ?, ?)"
-	_, err := db.Exec(query, v.StudentID, GetDate(), GetTime(), v.Type)
+
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(queryValues...)
 
 	return err
 }
@@ -41,13 +54,15 @@ func (v Visit) Update() error {
 
 	var query string
 	var isFirst bool
+	var queryValues []interface{}
 
 	// Wrote it separately because goland marked it as error -_(O_O|)_-
 	query = "update robotenok.visits" + " set "
 	isFirst = true
 
 	if v.Active != -1 {
-		query += "active = " + strconv.Itoa(v.Active)
+		query += "active = ?"
+		queryValues = append(queryValues, v.Active)
 		isFirst = false
 	}
 
@@ -56,7 +71,8 @@ func (v Visit) Update() error {
 			query += ","
 		}
 
-		query += " student_id = " + strconv.Itoa(v.StudentID)
+		query += " student_id = ?"
+		queryValues = append(queryValues, v.StudentID)
 		isFirst = false
 	}
 
@@ -65,7 +81,8 @@ func (v Visit) Update() error {
 			query += ","
 		}
 
-		query += " date = " + v.Date
+		query += " date = ?"
+		queryValues = append(queryValues, v.Date)
 		isFirst = false
 	}
 
@@ -74,7 +91,8 @@ func (v Visit) Update() error {
 			query += ","
 		}
 
-		query += " time = " + v.Time
+		query += " time = ?"
+		queryValues = append(queryValues, v.Time)
 		isFirst = false
 	}
 
@@ -83,13 +101,22 @@ func (v Visit) Update() error {
 			query += ","
 		}
 
-		query += " type = " + v.Type
+		query += " type = ?"
+		queryValues = append(queryValues, v.Type)
 		isFirst = false
 	}
 
-	query += " where id = " + strconv.Itoa(v.ID)
+	query += " where id = " + "?"
+	queryValues = append(queryValues, v.ID)
 
-	_, err := db.Exec(query)
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(queryValues...)
 	return err
 }
 
@@ -105,39 +132,46 @@ type Visits struct {
 func (v* Visits) Select(q Visit) error {
 	var query string
 	var isSearch bool
+	var queryValues []interface{}
 
 	isSearch = false
 	query = "select * from robotenok.visits" + " where "
 
 	if q.Active != -1 {
-		query += "active = " + strconv.Itoa(q.Active)
+		query += "active = ?"
+		queryValues = append(queryValues, q.Active)
 		isSearch = true
 	} else {
 		query += "active = 1"
 	}
 
 	if q.ID != -1 {
-		query += " and id = " + strconv.Itoa(q.ID)
+		query += " and id = ?"
+		queryValues = append(queryValues, q.ID)
 		isSearch = true
 	}
 
 	if q.StudentID != -1 {
-		query += " and student_id = " + strconv.Itoa(q.StudentID)
+		query += " and student_id = ?"
+		queryValues = append(queryValues, q.StudentID)
 		isSearch = true
 	}
 
 	if q.Date != "" {
-		query += " and date = " + q.Date
+		query += " and date = ?"
+		queryValues = append(queryValues, q.Date)
 		isSearch = true
 	}
 
 	if q.Time != "" {
-		query += " and time = " + q.Time
+		query += " and time = ?"
+		queryValues = append(queryValues, q.Time)
 		isSearch = true
 	}
 
 	if q.Type != "" {
-		query += " and type = " + q.Type
+		query += " and type = ?"
+		queryValues = append(queryValues, q.Type)
 		isSearch = true
 	}
 
@@ -145,7 +179,14 @@ func (v* Visits) Select(q Visit) error {
 		return errors.New("nothing to do")
 	}
 
-	row, err := db.Query(query)
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	row, err := stmt.Query(queryValues...)
 
 	if err != nil {
 		return err

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strconv"
 )
 
 type Payment struct {
@@ -31,9 +30,21 @@ func (p *Payment) Init() {
 
 func (p Payment) Add() error {
 	var query string
+	var queryValues []interface{}
 
-	query = "insert into robotenok.payments (date, time, student_id, credit, type, user_id) values (?,?,?,?,?,?)"
-	_, err := db.Exec(query, GetDate(), GetTime(), p.StudentID, p.Credit, p.Type, p.UserID)
+	queryValues = append(queryValues, GetDate())
+	queryValues = append(queryValues, GetTime())
+	queryValues = append(queryValues, p.StudentID)
+	queryValues = append(queryValues, p.Credit)
+	queryValues = append(queryValues, p.Type)
+	queryValues = append(queryValues, p.UserID)
+
+	query = "insert into robotenok.payments (date, time, student_id, credit, type, user_id) values (?, ?, ?, ?, ?, ?)"
+
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	_, err = stmt.Exec(queryValues...)
 
 	return err
 }
@@ -45,13 +56,15 @@ func (p Payment) Update() error {
 
 	var query string
 	var isFirst bool
+	var queryValues []interface{}
 
 	// Wrote it separately because goland marked it as error -_(O_O|)_-
 	query = "update robotenok.students" + " set "
 	isFirst = true
 
 	if p.Date != "" {
-		query += "date = " + p.Date
+		query += "date = ?"
+		queryValues = append(queryValues, p.Date)
 		isFirst = false
 	}
 
@@ -60,7 +73,8 @@ func (p Payment) Update() error {
 			query += ","
 		}
 
-		query += " time = " + p.Time
+		query += " time = ?"
+		queryValues = append(queryValues, p.Time)
 		isFirst = false
 	}
 
@@ -69,7 +83,8 @@ func (p Payment) Update() error {
 			query += ","
 		}
 
-		query += " student_id = " + strconv.Itoa(p.StudentID)
+		query += " student_id = ?"
+		queryValues = append(queryValues, p.StudentID)
 		isFirst = false
 	}
 
@@ -78,7 +93,8 @@ func (p Payment) Update() error {
 			query += ","
 		}
 
-		query += " credit = " + strconv.Itoa(p.Credit)
+		query += " credit = ?"
+		queryValues = append(queryValues, p.Credit)
 		isFirst = false
 	}
 
@@ -87,7 +103,8 @@ func (p Payment) Update() error {
 			query += ","
 		}
 
-		query += " type = " + p.Type
+		query += " type = ?"
+		queryValues = append(queryValues, p.Type)
 		isFirst = false
 	}
 
@@ -96,12 +113,17 @@ func (p Payment) Update() error {
 			query += ","
 		}
 
-		query += " user_id = " + strconv.Itoa(p.UserID)
+		query += " user_id = ?"
+		queryValues = append(queryValues, p.UserID)
 	}
 
-	query += " where id = " + strconv.Itoa(p.ID)
+	query += " where id = " + ""
+	queryValues = append(queryValues, p.ID)
 
-	_, err := db.Exec(query)
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	_, err = stmt.Exec(queryValues)
 	return err
 }
 
@@ -117,49 +139,58 @@ type Payments struct {
 func (p *Payments) Select(q Payment) error {
 	var query string
 	var isSearch bool
+	var queryValues []interface{}
 
 	isSearch = false
 	query = "select * from robotenok.payments" + " where "
 
 	if q.Active != -1 {
-		query += "active = " + strconv.Itoa(q.Active)
+		query += "active = ?"
+		queryValues = append(queryValues, q.Active)
 		isSearch = true
 	} else {
 		query += "active = 1"
 	}
 
 	if q.ID != -1 {
-		query += " and id = " + strconv.Itoa(q.ID)
+		query += " and id = ?"
+		queryValues = append(queryValues, q.ID)
 		isSearch = true
 	}
 
 	if q.Date != "" {
-		query += " and date = " + q.Date
+		query += " and date = ?"
+		queryValues = append(queryValues, q.Date)
 		isSearch = true
 	}
 
 	if q.Time != "" {
-		query += " and time = " + q.Time
+		query += " and time = ?"
+		queryValues = append(queryValues, q.Time)
 		isSearch = true
 	}
 
 	if q.StudentID != -1 {
-		query += " and student_id = " + strconv.Itoa(q.StudentID)
+		query += " and student_id = ?"
+		queryValues = append(queryValues, q.StudentID)
 		isSearch = true
 	}
 
 	if q.Credit != -1 {
-		query += " and credit = " + strconv.Itoa(q.Credit)
+		query += " and credit = ?"
+		queryValues = append(queryValues, q.Credit)
 		isSearch = true
 	}
 
 	if q.Type != "" {
-		query += " and type = " + q.Type
+		query += " and type = ?"
+		queryValues = append(queryValues, q.Type)
 		isSearch = true
 	}
 
 	if q.UserID != -1 {
-		query += " and user_id = " + strconv.Itoa(q.UserID)
+		query += " and user_id = ?"
+		queryValues = append(queryValues, q.UserID)
 		isSearch = true
 	}
 
@@ -167,7 +198,10 @@ func (p *Payments) Select(q Payment) error {
 		return errors.New("nothing to do")
 	}
 
-	row, err := db.Query(query)
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	row, err := stmt.Query(queryValues)
 
 	if err != nil {
 		return err

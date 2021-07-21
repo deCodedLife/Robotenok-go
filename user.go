@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"html/template"
 	"net/http"
 	"strconv"
 	"time"
@@ -29,22 +30,33 @@ func (u *User) Init() {
 func (u *User) Select() error {
 	var query string
 	var isSearch bool
+	var queryValues []interface{}
 
 	isSearch = false
- 	query = "select * from users where active = 1"
+ 	query = "select * from users" + " where "
+
+	if u.Active != -1 {
+		query += "active = ?"
+		queryValues = append(queryValues, u.Active)
+		isSearch = true
+	} else {
+		query += "active = 1"
+	}
 
 	if u.ID != -1 && u.ID != 0 {
-		query += " and id = " + strconv.Itoa(u.ID)
+		query += " and id = ?"
+		queryValues = append(queryValues, u.ID)
 		isSearch = true
 	}
 
 	if u.Name != "" {
-		query += " and name like '%" + u.Name + "%'"
+		query += " and name like '%" + template.HTMLEscapeString(u.Name) + "%'"
 		isSearch = true
 	}
 
 	if u.Login != "" {
-		query += " and login = '" + u.Login + "'"
+		query += " and login = ?"
+		queryValues = append(queryValues, u.Login)
 		isSearch = true
 	}
 
@@ -52,13 +64,21 @@ func (u *User) Select() error {
 		return errors.New("nothing to do")
 	}
 
-	row := db.QueryRow(query)
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	row := stmt.QueryRow(queryValues...)
 
 	if row.Err() != nil {
 		return row.Err()
 	}
 
-	err := row.Scan(&u.ID, &u.Name, &u.Login, &u.Password, &u.Image, &u.UserType, &u.Active)
+	err = row.Scan(&u.ID, &u.Name, &u.Login, &u.Password, &u.Image, &u.UserType, &u.Active)
+
 	return err
 }
 
@@ -75,9 +95,14 @@ func (u User) Add(hash ConfirmedDevices) error {
 	}
 
 	var query string
+	var queryValues []interface{}
+
+	queryValues = append(queryValues, u.Name)
+	queryValues = append(queryValues, GenString(16))
+	queryValues = append(queryValues, ToSHA512(u.Password))
 
 	query = "insert into robotenok.users (name, login, password) values (?, ?, ?)"
-	_, err = db.Query(query, u.Name, GenString(16), ToSHA512(u.Password))
+	_, err = db.Query(query, queryValues...)
 
 	return err
 }
@@ -93,34 +118,51 @@ func (u User) Update() error {
 	}
 
 	var query string
+	var queryValues []interface{}
+
 	query = "update robotenok.users set active = 1"
 
 	if u.UserType != "" {
-		query += ", user_type = " + u.UserType
+		query += ", user_type = ?"
+		queryValues = append(queryValues, u.UserType)
 	}
 
 	if u.Password != "" {
-		query += ", password = " + u.Password
+		query += ", password = ?"
+		queryValues = append(queryValues, u.Password)
 	}
 
 	if u.Login != "" {
-		query += ", login = " + u.Login
+		query += ", login = ?"
+		queryValues = append(queryValues, u.Login)
 	}
 
 	if u.Name != "" {
-		query += ", name = " + u.Name
+		query += ", name = ?"
+		queryValues = append(queryValues, u.Name)
 	}
 
 	if u.Secret != "" {
-		query += ", secret = " + u.Secret
+		query += ", secret = ?"
+		queryValues = append(queryValues, u.Secret)
 	}
 
 	if u.Image != "" {
-		query += ", image = " + u.Image
+		query += ", image = ?"
+		queryValues = append(queryValues, u.Image)
 	}
 
-	query += " where id = " + strconv.Itoa(u.ID)
-	_, err := db.Exec(query)
+	query += " where id = " + "?"
+	queryValues = append(queryValues, u.ID)
+
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(queryValues...)
 
 	return err
 }
@@ -132,34 +174,38 @@ type Users struct {
 func (u *Users) Select(q User) error {
 	var query string
 	var isSearch bool
+	var queryValues []interface{}
 
 	isSearch = false
 	query = "select * from robotenok.users" + " where "
 
 	if q.Active != -1 {
-		query += "active = " + strconv.Itoa(q.Active)
+		query += "active = ?"
+		queryValues = append(queryValues, q.Active)
 		isSearch = true
 	} else {
 		query += "active = 1"
 	}
 
 	if q.Name != "" {
-		query += " and name like '%" + q.Name + "%'"
+		query += " and name like '%" + template.HTMLEscapeString(q.Name) + "%'"
 		isSearch = true
 	}
 
 	if q.Login != "" {
-		query += " and login like '%" + q.Login + "%'"
+		query += " and login like '%" + template.HTMLEscapeString(q.Login) + "%'"
 		isSearch = true
 	}
 
 	if q.UserType != "" {
-		query += " and user_type = " + q.UserType
+		query += " and user_type = ?"
+		queryValues = append(queryValues, q.UserType)
 		isSearch = true
 	}
 
 	if q.ID != -1 {
-		query += " and id = " + strconv.Itoa(q.ID)
+		query += " and id = ?"
+		queryValues = append(queryValues, q.ID)
 		isSearch = true
 	}
 
@@ -167,7 +213,14 @@ func (u *Users) Select(q User) error {
 		return errors.New("nothing to do")
 	}
 
-	row, err := db.Query(query)
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	row, err := stmt.Query(query)
 
 	if err != nil {
 		return err

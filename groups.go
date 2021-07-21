@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strconv"
+	"text/template"
 )
 
 type GroupType struct {
@@ -21,9 +21,20 @@ func (g *GroupType) Init () {
 
 func (g GroupType) Add() error {
 	var query string
+	var queryValues []interface{}
+
+	queryValues = append(queryValues, g.Name)
 
 	query = "insert into robotenok.group_types (name) values ?"
-	_, err := db.Exec(query, g.Name)
+
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(queryValues...)
 
 	return err
 }
@@ -35,13 +46,15 @@ func (g GroupType) Update() error {
 
 	var query string
 	var isFirst bool
+	var queryValues []interface{}
 
 	// Wrote it separately because goland marked it as error -_(O_O|)_-
 	query = "update robotenok.students" + " set "
 	isFirst = true
 
 	if g.Name != "" {
-		query += "name = " + g.Name
+		query += "name = ?"
+		queryValues = append(queryValues, g.Name)
 		isFirst = false
 	}
 
@@ -50,12 +63,21 @@ func (g GroupType) Update() error {
 			query += ","
 		}
 
-		query += "active = " + strconv.Itoa(g.Active)
+		query += "active = ?"
+		queryValues = append(queryValues, g.Active)
 	}
 
-	query += " where id = " + strconv.Itoa(g.ID)
+	query += " where id = " + "?"
+	queryValues = append(queryValues, g.ID)
 
-	_, err := db.Exec(query)
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(queryValues...)
 	return err
 }
 
@@ -71,24 +93,27 @@ type GroupTypes struct {
 func (g* GroupTypes) Select(q GroupType) error {
 	var query string
 	var isSearch bool
+	var queryValues []interface{}
 
 	isSearch = false
 	query = "select * from robotenok.students" + " where "
 
 	if q.Active != -1 {
-		query += "active = " + strconv.Itoa(q.Active)
+		query += "active = ?"
+		queryValues = append(queryValues, q.Active)
 		isSearch = true
 	} else {
 		query += "active = 1"
 	}
 
 	if q.ID != -1 {
-		query += " and id = " + strconv.Itoa(q.ID)
+		query += " and id = ?"
+		queryValues = append(queryValues, q.ID)
 		isSearch = true
 	}
 
 	if q.Name != "" {
-		query += " and name like = %" + q.Name + "%"
+		query += " and name like = '%" + template.HTMLEscapeString(q.Name) + "%'"
 		isSearch = true
 	}
 
@@ -96,7 +121,14 @@ func (g* GroupTypes) Select(q GroupType) error {
 		return errors.New("nothing to do")
 	}
 
-	row, err := db.Query(query)
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	row, err := stmt.Query(queryValues...)
 
 	if err != nil {
 		return err
@@ -243,9 +275,21 @@ func (g GroupStudent) Init() {
 
 func (g GroupStudent) Add() error {
 	var query string
+	var queryValues []interface{}
+
+	queryValues = append(queryValues, g.GroupID)
+	queryValues = append(queryValues, g.StudentID)
 
 	query = "insert into robotenok.group_students (group_id, student_id) values (?, ?)"
-	_, err := db.Exec(query)
+
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(queryValues...)
 
 	return err
 }
@@ -257,13 +301,15 @@ func (g GroupStudent) Update() error {
 
 	var query string
 	var isFirst bool
+	var queryValues []interface{}
 
 	// Wrote it separately because goland marked it as error -_(O_O|)_-
 	query = "update robotenok.group_students" + " set "
 	isFirst = true
 
 	if g.GroupID != -1 {
-		query += " group_id = " + strconv.Itoa(g.GroupID)
+		query += " group_id = ?"
+		queryValues = append(queryValues, g.GroupID)
 		isFirst = false
 	}
 
@@ -272,13 +318,22 @@ func (g GroupStudent) Update() error {
 			query += ","
 		}
 
-		query += " student_id = " + strconv.Itoa(g.StudentID)
+		query += " student_id = ?"
+		queryValues = append(queryValues, g.StudentID)
 		isFirst = false
 	}
 
-	query += " where id = " + strconv.Itoa(g.ID)
+	query += " where id = " + "?"
+	queryValues = append(queryValues, g.ID)
 
-	_, err := db.Exec(query)
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(queryValues...)
 	return err
 }
 
@@ -294,29 +349,34 @@ type GroupStudents struct {
 func (g *GroupStudents) Select(q GroupStudent) error {
 	var query string
 	var isSearch bool
+	var queryValues []interface{}
 
 	isSearch = false
 	query = "select * from robotenok.group_students" + " where "
 
 	if q.Active != -1 {
-		query += "active = " + strconv.Itoa(q.Active)
+		query += "active = ?"
+		queryValues = append(queryValues, q.Active)
 		isSearch = true
 	} else {
 		query += "active = 1"
 	}
 
 	if q.ID != -1 {
-		query += " and id = " + strconv.Itoa(q.ID)
+		query += " and id = ?"
+		queryValues = append(queryValues, q.ID)
 		isSearch = true
 	}
 
 	if q.GroupID != -1 {
-		query += " and group_id = " + strconv.Itoa(q.GroupID)
+		query += " and group_id = ?"
+		queryValues = append(queryValues, q.GroupID)
 		isSearch = true
 	}
 
 	if q.StudentID != -1 {
-		query += " and student_id = " + strconv.Itoa(q.StudentID)
+		query += " and student_id = ?"
+		queryValues = append(queryValues, q.StudentID)
 		isSearch = true
 	}
 
@@ -324,7 +384,14 @@ func (g *GroupStudents) Select(q GroupStudent) error {
 		return errors.New("nothing to do")
 	}
 
-	row, err := db.Query(query)
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	row, err := stmt.Query(queryValues...)
 
 	if err != nil {
 		return err
@@ -474,9 +541,24 @@ func (g *Group) Init() {
 
 func (g Group) Add() error {
 	var query string
+	var queryValues []interface{}
+
+	queryValues = append(queryValues, g.Name)
+	queryValues = append(queryValues, g.Time)
+	queryValues = append(queryValues, g.Duration)
+	queryValues = append(queryValues, g.Weekday)
+	queryValues = append(queryValues, g.GroupType)
 
 	query = "insert into robotenok.`groups` (name, time, duration, weekday, group_type) values (?,?,?,?,?)"
-	_, err := db.Exec(query, g.Name, g.Time, g.Duration, g.Weekday, g.GroupType)
+
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(queryValues...)
 
 	return err
 }
@@ -488,13 +570,15 @@ func (g Group) Update() error {
 
 	var query string
 	var isFirst bool
+	var queryValues []interface{}
 
 	// Wrote it separately because goland marked it as error -_(O_O|)_-
 	query = "update robotenok.`groups`" + " set "
 	isFirst = true
 
 	if g.Active != -1 {
-		query += "active = " + strconv.Itoa(g.Active)
+		query += "active = ?"
+		queryValues = append(queryValues, g.Active)
 		isFirst = false
 	}
 
@@ -503,7 +587,8 @@ func (g Group) Update() error {
 			query += ","
 		}
 
-		query += " name = " + g.Name
+		query += " name = ?"
+		queryValues = append(queryValues, g.Name)
 		isFirst = false
 	}
 
@@ -512,7 +597,8 @@ func (g Group) Update() error {
 			query += ","
 		}
 
-		query += " time = " + g.Time
+		query += " time = ?"
+		queryValues = append(queryValues, g.Time)
 		isFirst = false
 	}
 
@@ -521,7 +607,8 @@ func (g Group) Update() error {
 			query += ","
 		}
 
-		query += " duration = " + strconv.Itoa(g.Duration)
+		query += " duration = ?"
+		queryValues = append(queryValues, g.Duration)
 		isFirst = false
 	}
 
@@ -530,7 +617,8 @@ func (g Group) Update() error {
 			query += ","
 		}
 
-		query += " weekday = " + strconv.Itoa(g.Weekday)
+		query += " weekday = ?"
+		queryValues = append(queryValues, g.Duration)
 		isFirst = false
 	}
 
@@ -539,12 +627,21 @@ func (g Group) Update() error {
 			query += ","
 		}
 
-		query += " group_type = " + strconv.Itoa(g.GroupType)
+		query += " group_type = ?"
+		queryValues = append(queryValues, g.GroupType)
 	}
 
-	query += " where id = " + strconv.Itoa(g.ID)
+	query += " where id = " + "?"
+	queryValues = append(queryValues, g.ID)
 
-	_, err := db.Exec(query)
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(queryValues...)
 	return err
 }
 
@@ -560,44 +657,51 @@ type Groups struct {
 func (g *Groups) Select(q Group) error {
 	var query string
 	var isSearch bool
+	var queryValues []interface{}
 
 	isSearch = false
 	query = "select * from robotenok.`groups`" + " where "
 
 	if q.Active != -1 {
-		query += "active = " + strconv.Itoa(q.Active)
+		query += "active = ?"
+		queryValues = append(queryValues, q.Active)
 		isSearch = true
 	} else {
 		query += "active = 1"
 	}
 
 	if q.ID != -1 {
-		query += " and id = " + strconv.Itoa(q.ID)
+		query += " and id = ?"
+		queryValues = append(queryValues, q.ID)
 		isSearch = true
 	}
 
 	if q.Time != "" {
-		query += " and time = " + q.Time
+		query += " and time = ?"
+		queryValues = append(queryValues, q.Time)
 		isSearch = true
 	}
 
 	if q.Duration != -1 {
-		query += " and duration = " + strconv.Itoa(q.Duration)
+		query += " and duration = ?"
+		queryValues = append(queryValues, q.Duration)
 		isSearch = true
 	}
 
 	if q.Weekday != -1 {
-		query += " and weekday = " + strconv.Itoa(q.Weekday)
+		query += " and weekday = ?"
+		queryValues = append(queryValues, q.Weekday)
 		isSearch = true
 	}
 
 	if q.GroupType != -1 {
-		query += " and group_type = " + strconv.Itoa(q.GroupType)
+		query += " and group_type = ?"
+		queryValues = append(queryValues, q.GroupType)
 		isSearch = true
 	}
 
 	if q.Name != "" {
-		query += " and name like '%" + q.Name + "%'"
+		query += " and name like '%" + template.HTMLEscapeString(q.Name) + "%'"
 		isSearch = true
 	}
 
@@ -605,7 +709,14 @@ func (g *Groups) Select(q Group) error {
 		return errors.New("nothing to do")
 	}
 
-	row, err := db.Query(query)
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	row, err := stmt.Query(queryValues...)
 
 	if err != nil {
 		return err

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"html/template"
 	"net/http"
 	"strconv"
 )
@@ -13,7 +14,7 @@ type Student struct {
 	Name    string `json:"name"`
 	Phone   string `json:"phone"`
 	Parents string `json:"parents"`
-	Sex     int    `json:"sex"`
+	Sex     int    `json:"sex"` // 0 male, 1 female
 }
 
 func (s *Student) Init() {
@@ -24,9 +25,15 @@ func (s *Student) Init() {
 
 func (s Student) Add() error {
 	var query string
+	var queryValues []interface{}
 
-	query = "insert into robotenok.students (name, phone, parents, sex) values (?,?,?,?)"
-	_, err := db.Exec(query, s.Name, s.Phone, s.Parents, s.Sex)
+	queryValues = append(queryValues, s.Name)
+	queryValues = append(queryValues, s.Phone)
+	queryValues = append(queryValues, s.Parents)
+	queryValues = append(queryValues, s.Sex)
+
+	query = "insert into robotenok.students (name, phone, parents, sex) values (?, ?, ?, ?)"
+	_, err := db.Exec(query, queryValues...)
 
 	return err
 }
@@ -38,13 +45,15 @@ func (s Student) Update() error {
 
 	var query string
 	var isFirst bool
+	var queryValues []interface{}
 
 	// Wrote it separately because goland marked it as error -_(O_O|)_-
 	query = "update robotenok.students" + " set "
 	isFirst = true
 
 	if s.Name != "" {
-		query += " name like %" + s.Name + "%"
+		query += " name = ?"
+		queryValues = append(queryValues, s.Name)
 		isFirst = false
 	}
 
@@ -53,7 +62,8 @@ func (s Student) Update() error {
 			query += ","
 		}
 
-		query += " phone like %" + s.Phone + "%"
+		query += " phone = ?"
+		queryValues = append(queryValues, s.Phone)
 		isFirst = false
 	}
 
@@ -62,7 +72,8 @@ func (s Student) Update() error {
 			query += ","
 		}
 
-		query += " parents = " + s.Parents
+		query += " parents = ?"
+		queryValues = append(queryValues, s.Parents)
 		isFirst = false
 	}
 
@@ -71,14 +82,22 @@ func (s Student) Update() error {
 			query += ","
 		}
 
-		query += " sex = " + strconv.Itoa(s.Sex)
+		query += " sex = ?"
+		queryValues = append(queryValues, s.Sex)
 		isFirst = false
 	}
 
 	query += " where id = " + strconv.Itoa(s.ID)
 
-	_, err := db.Exec(query)
-	return err
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	row := stmt.QueryRow(queryValues...)
+	return row.Err()
 }
 
 func (s *Student) Remove() error {
@@ -94,39 +113,44 @@ type Students struct {
 func (s *Students) selectStudents(q Student) error {
 	var query string
 	var isSearch bool
+	var queryValues []interface{}
 
 	isSearch = false
 	query = "select * from robotenok.students" + " where "
 
 	if q.Active != -1 {
-		query += "active = " + strconv.Itoa(q.Active)
+		query += "active = ?"
+		queryValues = append(queryValues, q.Active)
 		isSearch = true
 	} else {
 		query += "active = 1"
 	}
 
 	if q.ID != -1 {
-		query += " and id = " + strconv.Itoa(q.ID)
+		query += " and id = ?"
+		queryValues = append(queryValues, q.ID)
 		isSearch = true
 	}
 
 	if q.Sex != -1 {
-		query += " and sex = " + strconv.Itoa(q.Sex)
+		query += " and sex = ?"
+		queryValues = append(queryValues, q.Sex)
 		isSearch = true
 	}
 
+
 	if q.Parents != "" {
-		query += " and parents like '%" + q.Parents + "%'"
+		query += " and parents like '%" + template.HTMLEscapeString(q.Parents) + "%'"
 		isSearch = true
 	}
 
 	if q.Phone != "" {
-		query += " and phone like '%" + q.Phone + "%'"
+		query += " and phone like '%" + template.HTMLEscapeString(q.Phone) + "%'"
 		isSearch = true
 	}
 
 	if q.Name != "" {
-		query += " and name like '%" + q.Name + "%'"
+		query += " and name like '%" + template.HTMLEscapeString(q.Name) + "%'"
 		isSearch = true
 	}
 
@@ -134,7 +158,14 @@ func (s *Students) selectStudents(q Student) error {
 		return errors.New("nothing to do")
 	}
 
-	row, err := db.Query(query)
+	stpm, err := db.Prepare(query)
+	defer stpm.Close()
+
+	if err != nil {
+		return err
+	}
+
+	row, err := stpm.Query(queryValues...)
 
 	if err != nil {
 		return err
