@@ -27,7 +27,6 @@ func (c *Cost) Init() {
 }
 
 func (c Cost) Add() error {
-	var query string
 	var queryValues []interface{}
 
 	queryValues = append(queryValues, c.Product)
@@ -35,7 +34,7 @@ func (c Cost) Add() error {
 	queryValues = append(queryValues, GetDate())
 	queryValues = append(queryValues, GetTime())
 
-	query = "insert into robotenok.costs (product, cost, date, time) values (?, ?, ?, ?)"
+	var query = "insert into robotenok.costs (product, cost, date, time) values (?, ?, ?, ?)"
 
 	stmt, err := db.Prepare(query)
 	defer stmt.Close()
@@ -54,13 +53,11 @@ func (c Cost) Update() error {
 		return errors.New("costs id has wrong data")
 	}
 
-	var query string
-	var isFirst bool
 	var queryValues []interface{}
 
 	// Wrote it separately because goland marks it as error -_(O_O|)_-
-	query = "update robotenok.costs" + " set "
-	isFirst = true
+	var query = "update robotenok.costs" + " set "
+	var isFirst = true
 
 	if c.Product != "" {
 		query += " product like '%" + template.HTMLEscapeString(c.Product) + "%'"
@@ -130,12 +127,10 @@ type Costs struct {
 }
 
 func (c *Costs) Select(q Cost) error {
-	var query string
-	var isSearch bool
 	var queryValues []interface{}
 
-	isSearch = false
-	query = "select * from robotenok.costs" + " where "
+	var isSearch = false
+	var query = "select * from robotenok.costs" + " where "
 
 	if q.Active != -1 {
 		query += "active = ?"

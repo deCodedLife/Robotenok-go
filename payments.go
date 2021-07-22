@@ -29,7 +29,6 @@ func (p *Payment) Init() {
 }
 
 func (p Payment) Add() error {
-	var query string
 	var queryValues []interface{}
 
 	queryValues = append(queryValues, GetDate())
@@ -39,7 +38,7 @@ func (p Payment) Add() error {
 	queryValues = append(queryValues, p.Type)
 	queryValues = append(queryValues, p.UserID)
 
-	query = "insert into robotenok.payments (date, time, student_id, credit, type, user_id) values (?, ?, ?, ?, ?, ?)"
+	var query = "insert into robotenok.payments (date, time, student_id, credit, type, user_id) values (?, ?, ?, ?, ?, ?)"
 
 	stmt, err := db.Prepare(query)
 	defer stmt.Close()
@@ -54,13 +53,11 @@ func (p Payment) Update() error {
 		return errors.New("payment id has wrong data")
 	}
 
-	var query string
-	var isFirst bool
 	var queryValues []interface{}
 
 	// Wrote it separately because goland marked it as error -_(O_O|)_-
-	query = "update robotenok.students" + " set "
-	isFirst = true
+	var query = "update robotenok.students" + " set "
+	var isFirst = true
 
 	if p.Date != "" {
 		query += "date = ?"
@@ -137,12 +134,10 @@ type Payments struct {
 }
 
 func (p *Payments) Select(q Payment) error {
-	var query string
-	var isSearch bool
 	var queryValues []interface{}
 
-	isSearch = false
-	query = "select * from robotenok.payments" + " where "
+	var isSearch = false
+	var query = "select * from robotenok.payments" + " where "
 
 	if q.Active != -1 {
 		query += "active = ?"

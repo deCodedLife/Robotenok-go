@@ -25,7 +25,6 @@ func (v *Visit) Init() {
 }
 
 func (v Visit) Add() error {
-	var query string
 	var queryValues []interface{}
 
 	queryValues = append(queryValues, v.StudentID)
@@ -33,7 +32,7 @@ func (v Visit) Add() error {
 	queryValues = append(queryValues, GetTime())
 	queryValues = append(queryValues, v.Type)
 
-	query = "insert into robotenok.visits (student_id, date, time, type) values (?, ?, ?, ?)"
+	var query = "insert into robotenok.visits (student_id, date, time, type) values (?, ?, ?, ?)"
 
 	stmt, err := db.Prepare(query)
 	defer stmt.Close()
@@ -52,13 +51,11 @@ func (v Visit) Update() error {
 		return errors.New("visit id has wrong data")
 	}
 
-	var query string
-	var isFirst bool
 	var queryValues []interface{}
 
 	// Wrote it separately because goland marked it as error -_(O_O|)_-
-	query = "update robotenok.visits" + " set "
-	isFirst = true
+	var query = "update robotenok.visits" + " set "
+	var isFirst = true
 
 	if v.Active != -1 {
 		query += "active = ?"
@@ -130,12 +127,10 @@ type Visits struct {
 }
 
 func (v* Visits) Select(q Visit) error {
-	var query string
-	var isSearch bool
 	var queryValues []interface{}
 
-	isSearch = false
-	query = "select * from robotenok.visits" + " where "
+	var isSearch = false
+	var query = "select * from robotenok.visits" + " where "
 
 	if q.Active != -1 {
 		query += "active = ?"

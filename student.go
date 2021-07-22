@@ -24,7 +24,6 @@ func (s *Student) Init() {
 }
 
 func (s Student) Add() error {
-	var query string
 	var queryValues []interface{}
 
 	queryValues = append(queryValues, s.Name)
@@ -32,7 +31,7 @@ func (s Student) Add() error {
 	queryValues = append(queryValues, s.Parents)
 	queryValues = append(queryValues, s.Sex)
 
-	query = "insert into robotenok.students (name, phone, parents, sex) values (?, ?, ?, ?)"
+	var query = "insert into robotenok.students (name, phone, parents, sex) values (?, ?, ?, ?)"
 	_, err := db.Exec(query, queryValues...)
 
 	return err
@@ -43,13 +42,11 @@ func (s Student) Update() error {
 		return errors.New("user id has wrong data")
 	}
 
-	var query string
-	var isFirst bool
 	var queryValues []interface{}
 
 	// Wrote it separately because goland marked it as error -_(O_O|)_-
-	query = "update robotenok.students" + " set "
-	isFirst = true
+	var query = "update robotenok.students" + " set "
+	var isFirst = true
 
 	if s.Name != "" {
 		query += " name = ?"
@@ -111,12 +108,10 @@ type Students struct {
 }
 
 func (s *Students) selectStudents(q Student) error {
-	var query string
-	var isSearch bool
 	var queryValues []interface{}
 
-	isSearch = false
-	query = "select * from robotenok.students" + " where "
+	var isSearch = false
+	var query = "select * from robotenok.students" + " where "
 
 	if q.Active != -1 {
 		query += "active = ?"

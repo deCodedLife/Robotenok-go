@@ -43,6 +43,11 @@ func HandleError(err error, w http.ResponseWriter, r ResponceError) {
 
 func requestHandler (request *Request, r *http.Request) error {
 	err := json.NewDecoder(r.Body).Decode(&request)
+
+	if err != nil {
+		return err
+	}
+
 	return err
 }
 
@@ -80,6 +85,7 @@ func createDirectory(dirName string) bool {
 func permCheck(userID int, perm int) error {
 	var user User
 
+	user.Init()
 	user.ID	= userID
 	err := user.Select()
 
@@ -96,7 +102,7 @@ func permCheck(userID int, perm int) error {
 	return nil
 }
 
-func UserDaemon() {
+func UsersTimeout() {
 	for {
 		var currentTime = time.Now()
 

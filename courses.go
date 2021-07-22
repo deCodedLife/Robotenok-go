@@ -26,7 +26,6 @@ func (c Course) Init() {
 }
 
 func (c Course) Add() error {
-	var query string
 	var queryValues []interface{}
 
 	queryValues = append(queryValues, c.Name)
@@ -34,7 +33,7 @@ func (c Course) Add() error {
 	queryValues = append(queryValues, c.Lessons)
 	queryValues = append(queryValues, c.Image)
 
-	query = "insert into robotenok.courses (name, payment, lessons, image) values (?, ?, ?, ?)"
+	var query = "insert into robotenok.courses (name, payment, lessons, image) values (?, ?, ?, ?)"
 
 	stmt, err := db.Prepare(query)
 	defer stmt.Close()
@@ -53,13 +52,11 @@ func (c Course) Update() error {
 		return errors.New("course id has wrong data")
 	}
 
-	var query string
-	var isFirst bool
 	var queryValues []interface{}
 
 	// Wrote it separately because goland marked it as error -_(O_O|)_-
-	query = "update robotenok.courses" + " set "
-	isFirst = true
+	var query = "update robotenok.courses" + " set "
+	var isFirst = true
 
 	if c.Name != "" {
 		query += " name like %" + template.HTMLEscapeString(c.Name) + "%"
@@ -121,12 +118,10 @@ type Courses struct {
 }
 
 func (c *Courses) Select(q Course) error {
-	var query string
-	var isSearch bool
 	var queryValues []interface{}
 
-	isSearch = false
-	query = "select * from robotenok.students" + " where "
+	var isSearch = false
+	var query = "select * from robotenok.students" + " where "
 
 	if q.Active != -1 {
 		query += "active = ?"
@@ -322,13 +317,12 @@ func (c *CourseGroup) Init() {
 }
 
 func (c CourseGroup) Add() error {
-	var query string
 	var queryValues []interface{}
 
 	queryValues = append(queryValues, c.GroupID)
 	queryValues = append(queryValues, c.GroupID)
 
-	query = "insert into robotenok.course_groups (course_id, group_id) values (?, ?)"
+	var query = "insert into robotenok.course_groups (course_id, group_id) values (?, ?)"
 
 	stmt, err := db.Prepare(query)
 	defer stmt.Close()
@@ -343,13 +337,11 @@ func (c CourseGroup) Update() error {
 		return errors.New("course group id has wrong data")
 	}
 
-	var query string
-	var isFirst bool
 	var queryValues []interface{}
 
 	// Wrote it separately because goland marked it as error -_(O_O|)_-
-	query = "update robotenok.course_groups" + " set "
-	isFirst = true
+	var query = "update robotenok.course_groups" + " set "
+	var isFirst = true
 
 	if c.CourseID != -1 {
 		query += " course_id = ?"
@@ -402,12 +394,10 @@ type CourseGroups struct {
 }
 
 func (c *CourseGroups) Select(q CourseGroup) error {
-	var query string
-	var isSearch bool
 	var queryValues []interface{}
 
-	isSearch = false
-	query = "select * from robotenok.course_groups" + " where "
+	var isSearch = false
+	var query = "select * from robotenok.course_groups" + " where "
 
 	if q.Active != -1 {
 		query += "active = ?"

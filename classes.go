@@ -28,10 +28,24 @@ func (c Class) Init() {
 }
 
 func (c Class) Add() error {
-	var query string
+	var queryValues []interface{}
 
-	query = "insert into robotenok.classes (user_id, group_id, date, time, host_address) values (?, ?, ?, ?, ?)"
-	_, err := db.Exec(query, c.UserID, c.GroupID, GetDate(), GetTime(), c.HostAddress)
+	queryValues = append(queryValues, c.UserID)
+	queryValues = append(queryValues, c.GroupID)
+	queryValues = append(queryValues, GetDate())
+	queryValues = append(queryValues, GetTime())
+	queryValues = append(queryValues, c.HostAddress)
+
+	var query = "insert into robotenok.classes (user_id, group_id, date, time, host_address) values (?, ?, ?, ?, ?)"
+
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(query, c.UserID, c.GroupID, GetDate(), GetTime(), c.HostAddress)
 
 	return err
 }
@@ -41,15 +55,15 @@ func (c Class) Update() error {
 		return errors.New("class id has wrong data")
 	}
 
-	var query string
-	var isFirst bool
+	var queryValues []interface{}
 
 	// Wrote it separately because goland marked it as error -_(O_O|)_-
-	query = "update robotenok.classes" + " set "
-	isFirst = true
+	var query = "update robotenok.classes" + " set "
+	var isFirst = true
 
 	if c.UserID != -1 {
-		query += " user_id = " + strconv.Itoa(c.UserID)
+		query += " user_id = ?"
+		queryValues = append(queryValues, c.UserID)
 		isFirst = false
 	}
 
@@ -58,7 +72,8 @@ func (c Class) Update() error {
 			query += ","
 		}
 
-		query += " group_id = " + strconv.Itoa(c.GroupID)
+		query += " group_id = ?"
+		queryValues = append(queryValues, c.GroupID)
 		isFirst = false
 	}
 
@@ -67,7 +82,8 @@ func (c Class) Update() error {
 			query += ","
 		}
 
-		query += " date = " + c.Date
+		query += " date = ?"
+		queryValues = append(queryValues, c.Date)
 		isFirst = false
 	}
 	if c.Time != "" {
@@ -75,7 +91,8 @@ func (c Class) Update() error {
 			query += ","
 		}
 
-		query += " time = " + c.Time
+		query += " time = ?"
+		queryValues = append(queryValues, c.Time)
 		isFirst = false
 	}
 	if c.HostAddress != "" {
@@ -83,13 +100,21 @@ func (c Class) Update() error {
 			query += ","
 		}
 
-		query += " host_address = " + c.HostAddress
+		query += " host_address = ?"
+		queryValues = append(queryValues, c.HostAddress)
 		isFirst = false
 	}
 
 	query += " where id = " + strconv.Itoa(c.ID)
 
-	_, err := db.Exec(query)
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(queryValues...)
 	return err
 }
 
@@ -103,46 +128,52 @@ type Classes struct {
 }
 
 func (c *Classes) Select(q Class) error {
-	var query string
-	var isSearch bool
+	var queryValues []interface{}
 
-	isSearch = false
-	query = "select * from robotenok.students" + " where "
+	var isSearch = false
+	var query = "select * from robotenok.students" + " where "
 
 	if q.Active != -1 {
-		query += "active = " + strconv.Itoa(q.Active)
+		query += "active = ?"
+		queryValues = append(queryValues, q.Active)
 		isSearch = true
 	} else {
 		query += "active = 1"
 	}
 
 	if q.ID != -1 {
-		query += " and id = " + strconv.Itoa(q.ID)
+		query += " and id = ?"
+		queryValues = append(queryValues, q.ID)
 		isSearch = true
 	}
 
 	if q.UserID != -1 {
-		query += " and user_id = " + strconv.Itoa(q.UserID)
+		query += " and user_id = ?"
+		queryValues = append(queryValues, q.UserID)
 		isSearch = true
 	}
 
 	if q.GroupID != -1 {
-		query += " and group_id = " + strconv.Itoa(q.GroupID)
+		query += " and group_id = ?"
+		queryValues = append(queryValues, q.GroupID)
 		isSearch = true
 	}
 
 	if q.Date != "" {
-		query += " and date = " + q.Date
+		query += " and date = ?"
+		queryValues = append(queryValues, q.Date)
 		isSearch = true
 	}
 
 	if q.Time != "" {
-		query += " and time = " + q.Time
+		query += " and time = ?"
+		queryValues = append(queryValues, q.Time)
 		isSearch = true
 	}
 
 	if q.HostAddress != "" {
-		query += " and host_address = " + q.HostAddress
+		query += " and host_address = ?"
+		queryValues = append(queryValues, q.HostAddress)
 		isSearch = true
 	}
 
@@ -150,7 +181,14 @@ func (c *Classes) Select(q Class) error {
 		return errors.New("nothing to do")
 	}
 
-	row, err := db.Query(query)
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	row, err := stmt.Query(query)
 
 	if err != nil {
 		return err

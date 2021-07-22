@@ -48,6 +48,7 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&input)
 	HandleError(err, w, WrongDataError)
 
+	user.Init()
 	user.Login = input.Login
 	err = user.Select()
 
@@ -82,6 +83,7 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 func (r *Request) checkToken () error {
 	var user User
 
+	user.Init()
 	user.Secret = r.Token
 	user = SearchUser(user)
 

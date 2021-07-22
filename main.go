@@ -41,20 +41,25 @@ func configure() {
 	date := time.Now().Format(time.RFC1123)
 	dates := strings.Split(date, ":")
 	date = ""
+
 	for i := 0; i < len(dates); i++ {
 		date = date + dates[i] + "-"
 	}
+
 	f, err := os.OpenFile("logs/"+date+".log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 777)
+
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
 	}
 	wrt := io.MultiWriter(os.Stdout, f)
 	log.SetOutput(wrt)
 
+	defer LogHandler("configs")
+
 	db, err = sql.Open("mysql", database.Username+":"+database.Password+"@tcp(localhost:3306)/"+database.Database)
 
 	if err != nil {
-		fmt.Println("[ERROR] [Database] " + err.Error())
+		panic("[ERROR] [Database] " + err.Error())
 		return
 	}
 
@@ -102,55 +107,55 @@ func initHandlers(r *mux.Router) {
 	r.HandleFunc("/", access).Methods("GET", "POST")
 	r.HandleFunc("/robotenok/auth", Auth).Methods("POST")
 
-	r.HandleFunc("/robotenok/user/add/{hash}", AddUser).Methods("POST")
-	r.HandleFunc("/robotenok/user/update", UpdateUser).Methods("POST")
-	r.HandleFunc("/robotenok/user/remove", RemoveUser).Methods("POST")
-	r.HandleFunc("/robotenok/user/select", SelectUser).Methods("POST")
+	r.HandleFunc("/robotenok/users/{hash}", AddUser).Methods("POST")
+	r.HandleFunc("/robotenok/users", UpdateUser).Methods("PUT")
+	r.HandleFunc("/robotenok/users", RemoveUser).Methods("DELETE")
+	r.HandleFunc("/robotenok/users", SelectUser).Methods("POST")
 
-	r.HandleFunc("/robotenok/students/add", AddStudent).Methods("POST")
-	r.HandleFunc("/robotenok/students/update", UpdateStudent).Methods("POST")
-	r.HandleFunc("/robotenok/students/remove", RemoveStudent).Methods("POST")
-	r.HandleFunc("/robotenok/students/select", SelectStudents).Methods("POST")
+	r.HandleFunc("/robotenok/students", AddStudent).Methods("POST")
+	r.HandleFunc("/robotenok/students", UpdateStudent).Methods("PUT")
+	r.HandleFunc("/robotenok/students", RemoveStudent).Methods("DELETE")
+	r.HandleFunc("/robotenok/students", SelectStudents).Methods("GET")
 
-	r.HandleFunc("/robotenok/visits/add", AddVisit).Methods("POST")
-	r.HandleFunc("/robotenok/visits/update", UpdateVisit).Methods("POST")
-	r.HandleFunc("/robotenok/visits/remove", RemoveVisit).Methods("POST")
-	r.HandleFunc("/robotenok/visits/select", SelectVisits).Methods("POST")
+	r.HandleFunc("/robotenok/visits", AddVisit).Methods("POST")
+	r.HandleFunc("/robotenok/visits", UpdateVisit).Methods("PUT")
+	r.HandleFunc("/robotenok/visits", RemoveVisit).Methods("DELETE")
+	r.HandleFunc("/robotenok/visits", SelectVisits).Methods("GET")
 
-	r.HandleFunc("/robotenok/group-types/add", AddGroupType).Methods("POST")
-	r.HandleFunc("/robotenok/group-types/update", UpdateGroupType).Methods("POST")
-	r.HandleFunc("/robotenok/group-types/remove", RemoveGroupType).Methods("POST")
-	r.HandleFunc("/robotenok/group-types/select", SelectGroupTypes).Methods("POST")
+	r.HandleFunc("/robotenok/group-types", AddGroupType).Methods("POST")
+	r.HandleFunc("/robotenok/group-types", UpdateGroupType).Methods("PUT")
+	r.HandleFunc("/robotenok/group-types", RemoveGroupType).Methods("DELETE")
+	r.HandleFunc("/robotenok/group-types", SelectGroupTypes).Methods("GET")
 
-	r.HandleFunc("/robotenok/groups/add", AddGroup).Methods("POST")
-	r.HandleFunc("/robotenok/groups/update", UpdateGroup).Methods("POST")
-	r.HandleFunc("/robotenok/groups/remove", RemoveGroup).Methods("POST")
-	r.HandleFunc("/robotenok/groups/select", SelectGroups).Methods("POST")
+	r.HandleFunc("/robotenok/groups", AddGroup).Methods("POST")
+	r.HandleFunc("/robotenok/groups", UpdateGroup).Methods("PUT")
+	r.HandleFunc("/robotenok/groups", RemoveGroup).Methods("DELETE")
+	r.HandleFunc("/robotenok/groups", SelectGroups).Methods("GET")
 
-	r.HandleFunc("/robotenok/payments/add", AddPayment).Methods("POST")
-	r.HandleFunc("/robotenok/payments/update", UpdatePayment).Methods("POST")
-	r.HandleFunc("/robotenok/payments/remove", RemovePayment).Methods("POST")
-	r.HandleFunc("/robotenok/payments/select", SelectPayments).Methods("POST")
+	r.HandleFunc("/robotenok/payments", AddPayment).Methods("POST")
+	r.HandleFunc("/robotenok/payments", UpdatePayment).Methods("PUT")
+	r.HandleFunc("/robotenok/payments", RemovePayment).Methods("DELETE")
+	r.HandleFunc("/robotenok/payments", SelectPayments).Methods("GET")
 
-	r.HandleFunc("/robotenok/group-students/add", AddGroupStudent).Methods("POST")
-	r.HandleFunc("/robotenok/group-students/update", UpdateGroupStudent).Methods("POST")
-	r.HandleFunc("/robotenok/group-students/remove", RemoveGroupStudent).Methods("POST")
-	r.HandleFunc("/robotenok/group-students/select", SelectGroupStudents).Methods("POST")
+	r.HandleFunc("/robotenok/group-students", AddGroupStudent).Methods("POST")
+	r.HandleFunc("/robotenok/group-students", UpdateGroupStudent).Methods("PUT")
+	r.HandleFunc("/robotenok/group-students", RemoveGroupStudent).Methods("DELETE")
+	r.HandleFunc("/robotenok/group-students", SelectGroupStudents).Methods("GET")
 
-	r.HandleFunc("/robotenok/courses/add", AddCourse).Methods("POST")
-	r.HandleFunc("/robotenok/courses/update", UpdateCourse).Methods("POST")
-	r.HandleFunc("/robotenok/courses/remove", RemoveCourse).Methods("POST")
-	r.HandleFunc("/robotenok/courses/select", SelectCourses).Methods("POST")
+	r.HandleFunc("/robotenok/courses", AddCourse).Methods("POST")
+	r.HandleFunc("/robotenok/courses", UpdateCourse).Methods("PUT")
+	r.HandleFunc("/robotenok/courses", RemoveCourse).Methods("DELETE")
+	r.HandleFunc("/robotenok/courses", SelectCourses).Methods("GET")
 
-	r.HandleFunc("/robotenok/costs/add", AddCost).Methods("POST")
-	r.HandleFunc("/robotenok/costs/update", UpdateCost).Methods("POST")
-	r.HandleFunc("/robotenok/costs/remove", RemoveCost).Methods("POST")
-	r.HandleFunc("/robotenok/costs/select", SelectCosts).Methods("POST")
+	r.HandleFunc("/robotenok/costs", AddCost).Methods("POST")
+	r.HandleFunc("/robotenok/costs", UpdateCost).Methods("PUT")
+	r.HandleFunc("/robotenok/costs", RemoveCost).Methods("DELETE")
+	r.HandleFunc("/robotenok/costs", SelectCosts).Methods("GET")
 
-	r.HandleFunc("/robotenok/classes/add", AddClass).Methods("POST")
-	r.HandleFunc("/robotenok/classes/update", UpdateClass).Methods("POST")
-	r.HandleFunc("/robotenok/classes/remove", RemoveClass).Methods("POST")
-	r.HandleFunc("/robotenok/classes/select", SelectClasses).Methods("POST")
+	r.HandleFunc("/robotenok/classes", AddClass).Methods("POST")
+	r.HandleFunc("/robotenok/classes", UpdateClass).Methods("PUT")
+	r.HandleFunc("/robotenok/classes", RemoveClass).Methods("DELETE")
+	r.HandleFunc("/robotenok/classes", SelectClasses).Methods("GET")
 }
 
 func main() {
@@ -161,7 +166,7 @@ func main() {
 	initHandlers(r)
 
 	go func() {
-		UserDaemon()
+		UsersTimeout()
 	}()
 
 	err := http.ListenAndServe(":80", r)

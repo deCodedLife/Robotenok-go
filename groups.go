@@ -20,12 +20,11 @@ func (g *GroupType) Init () {
 }
 
 func (g GroupType) Add() error {
-	var query string
 	var queryValues []interface{}
 
 	queryValues = append(queryValues, g.Name)
 
-	query = "insert into robotenok.group_types (name) values ?"
+	var query = "insert into robotenok.group_types (name) values ?"
 
 	stmt, err := db.Prepare(query)
 	defer stmt.Close()
@@ -44,13 +43,11 @@ func (g GroupType) Update() error {
 		return errors.New("group type id has wrong data")
 	}
 
-	var query string
-	var isFirst bool
 	var queryValues []interface{}
 
 	// Wrote it separately because goland marked it as error -_(O_O|)_-
-	query = "update robotenok.students" + " set "
-	isFirst = true
+	var query = "update robotenok.students" + " set "
+	var isFirst = true
 
 	if g.Name != "" {
 		query += "name = ?"
@@ -91,12 +88,10 @@ type GroupTypes struct {
 }
 
 func (g* GroupTypes) Select(q GroupType) error {
-	var query string
-	var isSearch bool
 	var queryValues []interface{}
 
-	isSearch = false
-	query = "select * from robotenok.students" + " where "
+	var isSearch = false
+	var query = "select * from robotenok.students" + " where "
 
 	if q.Active != -1 {
 		query += "active = ?"
@@ -274,13 +269,12 @@ func (g GroupStudent) Init() {
 }
 
 func (g GroupStudent) Add() error {
-	var query string
 	var queryValues []interface{}
 
 	queryValues = append(queryValues, g.GroupID)
 	queryValues = append(queryValues, g.StudentID)
 
-	query = "insert into robotenok.group_students (group_id, student_id) values (?, ?)"
+	var query = "insert into robotenok.group_students (group_id, student_id) values (?, ?)"
 
 	stmt, err := db.Prepare(query)
 	defer stmt.Close()
@@ -299,13 +293,11 @@ func (g GroupStudent) Update() error {
 		return errors.New("group students id has wrong data")
 	}
 
-	var query string
-	var isFirst bool
 	var queryValues []interface{}
 
 	// Wrote it separately because goland marked it as error -_(O_O|)_-
-	query = "update robotenok.group_students" + " set "
-	isFirst = true
+	var query = "update robotenok.group_students" + " set "
+	var isFirst = true
 
 	if g.GroupID != -1 {
 		query += " group_id = ?"
@@ -347,12 +339,10 @@ type GroupStudents struct {
 }
 
 func (g *GroupStudents) Select(q GroupStudent) error {
-	var query string
-	var isSearch bool
 	var queryValues []interface{}
 
-	isSearch = false
-	query = "select * from robotenok.group_students" + " where "
+	var isSearch = false
+	var query = "select * from robotenok.group_students" + " where "
 
 	if q.Active != -1 {
 		query += "active = ?"
@@ -540,7 +530,6 @@ func (g *Group) Init() {
 }
 
 func (g Group) Add() error {
-	var query string
 	var queryValues []interface{}
 
 	queryValues = append(queryValues, g.Name)
@@ -549,7 +538,7 @@ func (g Group) Add() error {
 	queryValues = append(queryValues, g.Weekday)
 	queryValues = append(queryValues, g.GroupType)
 
-	query = "insert into robotenok.`groups` (name, time, duration, weekday, group_type) values (?,?,?,?,?)"
+	var query = "insert into robotenok.`groups` (name, time, duration, weekday, group_type) values (?,?,?,?,?)"
 
 	stmt, err := db.Prepare(query)
 	defer stmt.Close()
@@ -568,13 +557,11 @@ func (g Group) Update() error {
 		return errors.New("group id has wrong data")
 	}
 
-	var query string
-	var isFirst bool
 	var queryValues []interface{}
 
 	// Wrote it separately because goland marked it as error -_(O_O|)_-
-	query = "update robotenok.`groups`" + " set "
-	isFirst = true
+	var query = "update robotenok.`groups`" + " set "
+	var isFirst = true
 
 	if g.Active != -1 {
 		query += "active = ?"
@@ -655,12 +642,10 @@ type Groups struct {
 }
 
 func (g *Groups) Select(q Group) error {
-	var query string
-	var isSearch bool
 	var queryValues []interface{}
 
-	isSearch = false
-	query = "select * from robotenok.`groups`" + " where "
+	var isSearch = false
+	var query = "select * from robotenok.`groups`" + " where "
 
 	if q.Active != -1 {
 		query += "active = ?"

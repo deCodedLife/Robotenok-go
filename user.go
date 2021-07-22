@@ -25,15 +25,14 @@ type User struct {
 
 func (u *User) Init() {
 	u.ID = -1
+	u.Active = -1
 }
 
 func (u *User) Select() error {
-	var query string
-	var isSearch bool
 	var queryValues []interface{}
 
-	isSearch = false
- 	query = "select * from users" + " where "
+	var isSearch = false
+ 	var query = "select * from users" + " where "
 
 	if u.Active != -1 {
 		query += "active = ?"
@@ -172,12 +171,10 @@ type Users struct {
 }
 
 func (u *Users) Select(q User) error {
-	var query string
-	var isSearch bool
 	var queryValues []interface{}
 
-	isSearch = false
-	query = "select * from robotenok.users" + " where "
+	var isSearch = false
+	var query = "select * from robotenok.users" + " where "
 
 	if q.Active != -1 {
 		query += "active = ?"
