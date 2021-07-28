@@ -97,7 +97,7 @@ func (u User) Add(hash ConfirmedDevices) error {
 	var queryValues []interface{}
 
 	queryValues = append(queryValues, u.Name)
-	queryValues = append(queryValues, GenString(16))
+	queryValues = append(queryValues, GenString(8))
 	queryValues = append(queryValues, ToSHA512(u.Password))
 
 	query = "insert into robotenok.users (name, login, password) values (?, ?, ?)"
@@ -366,5 +366,5 @@ func SelectUser(w http.ResponseWriter, r *http.Request) {
 	err = selectedUsers.Select(searchedUser)
 	HandleError(err, w, UnknownError)
 
-	SendData(w, 200, selectedUsers)
+	SendData(w, 200, selectedUsers.Users)
 }

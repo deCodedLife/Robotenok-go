@@ -1,7 +1,7 @@
 package main
 
 type ResponceError struct {
-	Status      int32
+	Status      int
 	Description string
 }
 
@@ -31,7 +31,7 @@ type Error struct {
 }
 
 type Response struct {
-	Status   int32       `json:"status"`
+	Status   int       `json:"status"`
 	Response interface{} `json:"response"`
 }
 

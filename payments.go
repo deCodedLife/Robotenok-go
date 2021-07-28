@@ -321,5 +321,5 @@ func SelectPayments(w http.ResponseWriter, r *http.Request) {
 	err = selectedPayments.Select(searchingPayment)
 	HandleError(err, w, UnknownError)
 
-	SendData(w, 200, selectedPayments)
+	SendData(w, 200, selectedPayments.Payments)
 }

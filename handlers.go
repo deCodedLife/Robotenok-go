@@ -106,6 +106,10 @@ func UsersTimeout() {
 	for {
 		var currentTime = time.Now()
 
+		if len(ActiveUsers) == 0 {
+			return
+		}
+
 		for index, user := range ActiveUsers {
 			var onlineTime = user.Online.Local().Add(time.Minute * 15)
 
@@ -168,18 +172,19 @@ func LogData (sender string, data interface{}) {
 	log.Println("[" + strings.ToUpper(sender) + "]", data)
 }
 
-func SendData(w http.ResponseWriter, status int32, data interface{}) {
+func SendData(w http.ResponseWriter, status int, data interface{}) {
 	var response Response
 
 	response.Status = status
 	response.Response = data
 
 	if status != 200 {
+		w.WriteHeader(status)
 		err := Error{data}
 		data = err
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	err := json.NewEncoder(w).Encode(response)
 
 	if err != nil {

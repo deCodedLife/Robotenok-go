@@ -110,52 +110,57 @@ func initHandlers(r *mux.Router) {
 	r.HandleFunc("/robotenok/users/{hash}", AddUser).Methods("POST")
 	r.HandleFunc("/robotenok/users", UpdateUser).Methods("PUT")
 	r.HandleFunc("/robotenok/users", RemoveUser).Methods("DELETE")
-	r.HandleFunc("/robotenok/users", SelectUser).Methods("POST")
+	r.HandleFunc("/robotenok/select-users", SelectUser).Methods("POST")
 
 	r.HandleFunc("/robotenok/students", AddStudent).Methods("POST")
 	r.HandleFunc("/robotenok/students", UpdateStudent).Methods("PUT")
 	r.HandleFunc("/robotenok/students", RemoveStudent).Methods("DELETE")
-	r.HandleFunc("/robotenok/students", SelectStudents).Methods("GET")
+	r.HandleFunc("/robotenok/select-students", SelectStudents).Methods("POST")
 
 	r.HandleFunc("/robotenok/visits", AddVisit).Methods("POST")
 	r.HandleFunc("/robotenok/visits", UpdateVisit).Methods("PUT")
 	r.HandleFunc("/robotenok/visits", RemoveVisit).Methods("DELETE")
-	r.HandleFunc("/robotenok/visits", SelectVisits).Methods("GET")
+	r.HandleFunc("/robotenok/select-visits", SelectVisits).Methods("POST")
 
 	r.HandleFunc("/robotenok/group-types", AddGroupType).Methods("POST")
 	r.HandleFunc("/robotenok/group-types", UpdateGroupType).Methods("PUT")
 	r.HandleFunc("/robotenok/group-types", RemoveGroupType).Methods("DELETE")
-	r.HandleFunc("/robotenok/group-types", SelectGroupTypes).Methods("GET")
+	r.HandleFunc("/robotenok/select-group-types", SelectGroupTypes).Methods("POST")
 
 	r.HandleFunc("/robotenok/groups", AddGroup).Methods("POST")
 	r.HandleFunc("/robotenok/groups", UpdateGroup).Methods("PUT")
 	r.HandleFunc("/robotenok/groups", RemoveGroup).Methods("DELETE")
-	r.HandleFunc("/robotenok/groups", SelectGroups).Methods("GET")
+	r.HandleFunc("/robotenok/select-groups", SelectGroups).Methods("POST")
+
+	r.HandleFunc("/robotenok/group-curators", AddGroupCurator).Methods("POST")
+	r.HandleFunc("/robotenok/group-curators", UpdateGroupCurator).Methods("PUT")
+	r.HandleFunc("/robotenok/group-curators", RemoveGroupCurator).Methods("DELETE")
+	r.HandleFunc("/robotenok/select-group-curators", SelectGroupCurators).Methods("POST")
 
 	r.HandleFunc("/robotenok/payments", AddPayment).Methods("POST")
 	r.HandleFunc("/robotenok/payments", UpdatePayment).Methods("PUT")
 	r.HandleFunc("/robotenok/payments", RemovePayment).Methods("DELETE")
-	r.HandleFunc("/robotenok/payments", SelectPayments).Methods("GET")
+	r.HandleFunc("/robotenok/select-payments", SelectPayments).Methods("POST")
 
 	r.HandleFunc("/robotenok/group-students", AddGroupStudent).Methods("POST")
 	r.HandleFunc("/robotenok/group-students", UpdateGroupStudent).Methods("PUT")
 	r.HandleFunc("/robotenok/group-students", RemoveGroupStudent).Methods("DELETE")
-	r.HandleFunc("/robotenok/group-students", SelectGroupStudents).Methods("GET")
+	r.HandleFunc("/robotenok/select-group-students", SelectGroupStudents).Methods("POST")
 
 	r.HandleFunc("/robotenok/courses", AddCourse).Methods("POST")
 	r.HandleFunc("/robotenok/courses", UpdateCourse).Methods("PUT")
 	r.HandleFunc("/robotenok/courses", RemoveCourse).Methods("DELETE")
-	r.HandleFunc("/robotenok/courses", SelectCourses).Methods("GET")
+	r.HandleFunc("/robotenok/select-courses", SelectCourses).Methods("POST")
 
 	r.HandleFunc("/robotenok/costs", AddCost).Methods("POST")
 	r.HandleFunc("/robotenok/costs", UpdateCost).Methods("PUT")
 	r.HandleFunc("/robotenok/costs", RemoveCost).Methods("DELETE")
-	r.HandleFunc("/robotenok/costs", SelectCosts).Methods("GET")
+	r.HandleFunc("/robotenok/select-costs", SelectCosts).Methods("POST")
 
 	r.HandleFunc("/robotenok/classes", AddClass).Methods("POST")
 	r.HandleFunc("/robotenok/classes", UpdateClass).Methods("PUT")
 	r.HandleFunc("/robotenok/classes", RemoveClass).Methods("DELETE")
-	r.HandleFunc("/robotenok/classes", SelectClasses).Methods("GET")
+	r.HandleFunc("/robotenok/select-classes", SelectClasses).Methods("POST")
 }
 
 func main() {

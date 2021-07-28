@@ -251,7 +251,262 @@ func SelectGroupTypes(w http.ResponseWriter, r *http.Request) {
 	err = selectedGroupTypes.Select(searchingGroupType)
 	HandleError(err, w, UnknownError)
 
-	SendData(w, 200, selectedGroupTypes)
+	SendData(w, 200, selectedGroupTypes.GroupTypes)
+}
+
+type GroupCurator struct {
+	ID int `json:"id"`
+	GroupID int `json:"group_id"`
+	UserID int `json:"user_id"`
+	Active int `json:"active"`
+}
+
+func (g *GroupCurator) Init() {
+	g.ID = -1
+	g.GroupID = -1
+	g.UserID = -1
+	g.Active = -1
+}
+
+func (g GroupCurator) Add() error {
+	var queryValues []interface{}
+
+	queryValues = append(queryValues, g.GroupID)
+	queryValues = append(queryValues, g.UserID)
+
+	var query = "insert into robotenok.group_curators (group_id, user_id) values (?, ?)"
+
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(queryValues...)
+
+	return err
+}
+
+func (g GroupCurator) Update() error {
+	if g.ID == -1 {
+		return errors.New("group curator id has wrong data")
+	}
+
+	var queryValues []interface{}
+
+	// Wrote it separately because goland marked it as error -_(O_O|)_-
+	var query = "update robotenok.group_curators" + " set "
+	var isFirst = true
+
+	if g.GroupID != -1 {
+		query += " group_id = ?"
+		queryValues = append(queryValues, g.GroupID)
+		isFirst = false
+	}
+
+	if g.UserID != -1 {
+		if isFirst == false {
+			query += ","
+		}
+
+		query += " student_id = ?"
+		queryValues = append(queryValues, g.UserID)
+		isFirst = false
+	}
+
+	query += " where id = " + "?"
+	queryValues = append(queryValues, g.ID)
+
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(queryValues...)
+	return err
+}
+
+func (g *GroupCurator) Remove() error {
+	g.Active = 0
+	return g.Update()
+}
+
+type GroupCurators struct {
+	GroupCurators []GroupCurator `json:"group_curators"`
+}
+
+func (g *GroupCurators) Select(q GroupCurator) error {
+	var queryValues []interface{}
+
+	var isSearch = false
+	var query = "select * from robotenok.group_curators" + " where "
+
+	if q.Active != -1 {
+		query += "active = ?"
+		queryValues = append(queryValues, q.Active)
+		isSearch = true
+	} else {
+		query += "active = 1"
+	}
+
+	if q.ID != -1 {
+		query += " and id = ?"
+		queryValues = append(queryValues, q.ID)
+		isSearch = true
+	}
+
+	if q.GroupID != -1 {
+		query += " and group_id = ?"
+		queryValues = append(queryValues, q.GroupID)
+		isSearch = true
+	}
+
+	if q.UserID != -1 {
+		query += " and user_id = ?"
+		queryValues = append(queryValues, q.UserID)
+		isSearch = true
+	}
+
+	if isSearch == false {
+		return errors.New("nothing to do")
+	}
+
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	row, err := stmt.Query(queryValues...)
+
+	if err != nil {
+		return err
+	}
+
+	for row.Next() {
+		t := GroupCurator{}
+		err := row.Scan(&t.ID, &t.Active, &t.GroupID, &t.UserID)
+
+		if err != nil {
+			return err
+		}
+
+		g.GroupCurators = append(g.GroupCurators, t)
+	}
+
+	return nil
+}
+
+func AddGroupCurator(w http.ResponseWriter, r *http.Request) {
+	var request Request
+	var newGroupCurator GroupCurator
+
+	defer LogHandler("group student add")
+
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
+
+	err = request.checkToken()
+	HandleError(err, w, SecurityError)
+
+	err = permCheck(request.UserID, 1)
+	HandleError(err, w, SecurityError)
+
+	textJson, err := json.Marshal(request.Body)
+	HandleError(err, w, WrongDataError)
+
+	err = json.Unmarshal(textJson, &newGroupCurator)
+	HandleError(err, w, WrongDataError)
+
+	err = newGroupCurator.Add()
+	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, newGroupCurator)
+}
+
+func UpdateGroupCurator (w http.ResponseWriter, r *http.Request) {
+	var request Request
+	var updatingGroupCurator GroupCurator
+
+	defer LogHandler("group student update")
+
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
+
+	err = request.checkToken()
+	HandleError(err, w, SecurityError)
+
+	err = permCheck(request.UserID, 1)
+	HandleError(err, w, SecurityError)
+
+	textJson, err := json.Marshal(request.Body)
+	HandleError(err, w, WrongDataError)
+
+	updatingGroupCurator.Init()
+	err = json.Unmarshal(textJson, &updatingGroupCurator)
+	HandleError(err, w, WrongDataError)
+
+	err = updatingGroupCurator.Update()
+	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, updatingGroupCurator)
+}
+
+func RemoveGroupCurator(w http.ResponseWriter, r *http.Request) {
+	var request Request
+	var removingGroupCurator GroupCurator
+
+	defer LogHandler("group student remove")
+
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
+
+	err = request.checkToken()
+	HandleError(err, w, SecurityError)
+
+	err = permCheck(request.UserID, 1)
+	HandleError(err, w, SecurityError)
+
+	textJson, err := json.Marshal(request.Body)
+	HandleError(err, w, WrongDataError)
+
+	err = json.Unmarshal(textJson, &removingGroupCurator)
+	HandleError(err, w, WrongDataError)
+
+	err = removingGroupCurator.Remove()
+	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, removingGroupCurator)
+}
+
+func SelectGroupCurators(w http.ResponseWriter, r *http.Request) {
+	var request Request
+	var searchingGroupCurator GroupCurator
+	var selectedGroupCurators GroupCurators
+
+	defer LogHandler("group students select")
+
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
+
+	err = request.checkToken()
+	HandleError(err, w, SecurityError)
+
+	textJson, err := json.Marshal(request.Body)
+	HandleError(err, w, WrongDataError)
+
+	searchingGroupCurator.Init()
+	err = json.Unmarshal(textJson, &searchingGroupCurator)
+	HandleError(err, w, WrongDataError)
+
+	err = selectedGroupCurators.Select(searchingGroupCurator)
+	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, selectedGroupCurators.GroupCurators)
 }
 
 type GroupStudent struct {
@@ -506,7 +761,7 @@ func SelectGroupStudents(w http.ResponseWriter, r *http.Request) {
 	err = selectedGroupStudents.Select(searchingGroupStudent)
 	HandleError(err, w, UnknownError)
 
-	SendData(w, 200, selectedGroupStudents)
+	SendData(w, 200, selectedGroupStudents.GroupStudents)
 }
 
 type Group struct {
@@ -825,5 +1080,5 @@ func SelectGroups(w http.ResponseWriter, r *http.Request) {
 	err = selectedGroups.Select(searchingGroup)
 	HandleError(err, w, UnknownError)
 
-	SendData(w, 200, selectedGroups)
+	SendData(w, 200, selectedGroups.Groups)
 }

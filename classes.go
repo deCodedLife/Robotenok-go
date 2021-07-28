@@ -312,5 +312,5 @@ func SelectClasses(w http.ResponseWriter, r *http.Request) {
 	err = selectedClasses.Select(searchingClass)
 	HandleError(err, w, UnknownError)
 
-	SendData(w, 200, selectedClasses)
+	SendData(w, 200, selectedClasses.Classes)
 }

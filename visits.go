@@ -309,5 +309,5 @@ func SelectVisits(w http.ResponseWriter, r *http.Request) {
 	err = selectedVisits.Select(searcherVisits)
 	HandleError(err, w, UnknownError)
 
-	SendData(w, 200, selectedVisits)
+	SendData(w, 200, selectedVisits.Visits)
 }

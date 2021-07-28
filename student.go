@@ -288,5 +288,5 @@ func SelectStudents (w http.ResponseWriter, r *http.Request) {
 	err = selectedStudents.selectStudents(searchingStudent)
 	HandleError(err, w, UnknownError)
 
-	SendData(w, 200, selectedStudents)
+	SendData(w, 200, selectedStudents.Students)
 }

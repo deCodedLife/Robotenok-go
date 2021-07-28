@@ -299,7 +299,7 @@ func SelectCourses(w http.ResponseWriter, r *http.Request) {
 	err = selectedCourses.Select(searchingCourse)
 	HandleError(err, w, UnknownError)
 
-	SendData(w, 200, selectedCourses)
+	SendData(w, 200, selectedCourses.Courses)
 }
 
 type CourseGroup struct {

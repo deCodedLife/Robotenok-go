@@ -296,5 +296,5 @@ func SelectCosts(w http.ResponseWriter, r *http.Request) {
 	err = selectedCosts.Select(searchingCost)
 	HandleError(err, w, WrongDataError)
 
-	SendData(w, 200, selectedCosts)
+	SendData(w, 200, selectedCosts.Costs)
 }
