@@ -179,7 +179,7 @@ func SendData(w http.ResponseWriter, status int, data interface{}) {
 	response.Response = data
 
 	if status != 200 {
-		w.WriteHeader(status)
+		w.WriteHeader(http.StatusInternalServerError)
 		err := Error{data}
 		data = err
 	}

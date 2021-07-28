@@ -17,7 +17,7 @@ type Class struct {
 	HostAddress string `json:"host_address"`
 }
 
-func (c Class) Init() {
+func (c *Class) Init() {
 	c.ID = -1
 	c.Active = -1
 	c.UserID = -1
@@ -131,7 +131,7 @@ func (c *Classes) Select(q Class) error {
 	var queryValues []interface{}
 
 	var isSearch = false
-	var query = "select * from robotenok.students" + " where "
+	var query = "select * from robotenok.classes" + " where "
 
 	if q.Active != -1 {
 		query += "active = ?"
@@ -188,7 +188,7 @@ func (c *Classes) Select(q Class) error {
 		return err
 	}
 
-	row, err := stmt.Query(query)
+	row, err := stmt.Query(queryValues...)
 
 	if err != nil {
 		return err

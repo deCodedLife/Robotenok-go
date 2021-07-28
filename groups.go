@@ -389,7 +389,7 @@ func (g *GroupCurators) Select(q GroupCurator) error {
 
 	for row.Next() {
 		t := GroupCurator{}
-		err := row.Scan(&t.ID, &t.Active, &t.GroupID, &t.UserID)
+		err := row.Scan(&t.ID, &t.GroupID, &t.UserID, &t.Active)
 
 		if err != nil {
 			return err
@@ -516,7 +516,7 @@ type GroupStudent struct {
 	StudentID int `json:"student_id"`
 }
 
-func (g GroupStudent) Init() {
+func (g *GroupStudent) Init() {
 	g.ID = -1
 	g.Active = -1
 	g.GroupID = -1
