@@ -46,7 +46,7 @@ func (g GroupType) Update() error {
 	var queryValues []interface{}
 
 	// Wrote it separately because goland marked it as error -_(O_O|)_-
-	var query = "update robotenok.students" + " set "
+	var query = "update robotenok.group_types" + " set "
 	var isFirst = true
 
 	if g.Name != "" {
@@ -91,7 +91,7 @@ func (g* GroupTypes) Select(q GroupType) error {
 	var queryValues []interface{}
 
 	var isSearch = false
-	var query = "select * from robotenok.students" + " where "
+	var query = "select * from robotenok.group_types" + " where "
 
 	if q.Active != -1 {
 		query += "active = ?"
