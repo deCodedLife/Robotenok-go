@@ -22,7 +22,6 @@ var WrongDataError ResponceError
 var SecurityError ResponceError
 var UnknownError ResponceError
 
-
 func configure() {
 	var err error
 	var database Database
@@ -163,11 +162,10 @@ func initHandlers(r *mux.Router) {
 	r.HandleFunc("/robotenok/payment-object", RemovePaymentObject).Methods("DELETE")
 	r.HandleFunc("/robotenok/payment-objects", SelectPaymentsObject).Methods("POST")
 
-	// TODO: Implement handlers for receipts
-	r.HandleFunc("/robotenok/payment-receipt", nil).Methods("POST")
-	r.HandleFunc("/robotenok/payment-receipt", nil).Methods("PUT")
-	r.HandleFunc("/robotenok/payment-receipt", nil).Methods("DELETE")
-	r.HandleFunc("/robotenok/payment-receipts", nil).Methods("POST")
+	r.HandleFunc("/robotenok/payment-receipt", AddPaymentReceipt).Methods("POST")
+	r.HandleFunc("/robotenok/payment-receipt", UpdatePaymentReceipt).Methods("PUT")
+	r.HandleFunc("/robotenok/payment-receipt", RemovePaymentReceipt).Methods("DELETE")
+	r.HandleFunc("/robotenok/payment-receipts", SelectPaymentsReceipts).Methods("POST")
 
 	r.HandleFunc("/robotenok/group-student", AddGroupStudent).Methods("POST")
 	r.HandleFunc("/robotenok/group-student", UpdateGroupStudent).Methods("PUT")
