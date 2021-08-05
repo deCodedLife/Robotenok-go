@@ -91,7 +91,7 @@ func (p *PaymentObjects) Select(q PaymentObject) error {
 	var queryValues []interface{}
 
 	var isSearch = false
-	var query = "select * from robotenok.payments" + " where "
+	var query = "select * from robotenok.payment_objects" + " where "
 
 	if q.Active != -1 {
 		query += "active = ?"
@@ -143,7 +143,7 @@ func AddPaymentObject(w http.ResponseWriter, r *http.Request) {
 	var request Request
 	var newPaymentObject PaymentObject
 
-	defer LogHandler("payment add")
+	defer LogHandler("payment object add")
 
 	err := requestHandler(&request, r)
 	HandleError(err, w, WrongDataError)
@@ -170,7 +170,7 @@ func UpdatePaymentObject(w http.ResponseWriter, r *http.Request) {
 	var request Request
 	var updatingPaymentObject PaymentObject
 
-	defer LogHandler("payment update")
+	defer LogHandler("payment object update")
 
 	err := requestHandler(&request, r)
 	HandleError(err, w, WrongDataError)
@@ -198,7 +198,7 @@ func RemovePaymentObject(w http.ResponseWriter, r *http.Request) {
 	var request Request
 	var removingPaymentObject PaymentObject
 
-	defer LogHandler("payment remove")
+	defer LogHandler("payment object remove")
 
 	err := requestHandler(&request, r)
 	HandleError(err, w, WrongDataError)
@@ -206,7 +206,7 @@ func RemovePaymentObject(w http.ResponseWriter, r *http.Request) {
 	err = request.checkToken()
 	HandleError(err, w, SecurityError)
 
-	err = permCheck(request.UserID, 1)
+	err = permCheck(request.UserID, 0)
 	HandleError(err, w, SecurityError)
 
 	textJson, err := json.Marshal(request.Body)
@@ -226,7 +226,7 @@ func SelectPaymentsObject(w http.ResponseWriter, r *http.Request) {
 	var searchingPaymentObject PaymentObject
 	var selectedPaymentObjects PaymentObjects
 
-	defer LogHandler("payments select")
+	defer LogHandler("payment objects select")
 
 	err := requestHandler(&request, r)
 	HandleError(err, w, WrongDataError)
@@ -245,6 +245,262 @@ func SelectPaymentsObject(w http.ResponseWriter, r *http.Request) {
 	HandleError(err, w, UnknownError)
 
 	SendData(w, 200, selectedPaymentObjects.PaymentObjects)
+}
+
+type PaymentReceipt struct {
+	ID int `json:"id"`
+	PaymentID int `json:"payment_id"`
+	ImageID int `json:"image_id"`
+	Active int `json:"active"`
+}
+
+func (p *PaymentReceipt) Init() {
+	p.ID = -1
+	p.PaymentID = -1
+	p.ImageID = -1
+	p.Active = -1
+}
+
+func (p PaymentReceipt) Add () error {
+	var queryValues []interface{}
+
+	queryValues = append(queryValues, p.PaymentID)
+	queryValues = append(queryValues, p.ImageID)
+
+	var query = "insert into robotenok.payment_receipts (payment_id, image_id) values (?, ?)"
+
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(queryValues)
+
+	return err
+}
+
+func (p PaymentReceipt) Update() error {
+	if p.ID == -1 {
+		return errors.New("payment receipt has wrong data")
+	}
+
+	var queryValues []interface{}
+
+	// Wrote it separately because goland marked it as error -_(O_O|)_-
+	var query = "update robotenok.payment_receipts" + " set "
+	var isFirst = true
+
+	if p.Active != -1 {
+		query += " active = ?"
+		queryValues = append(queryValues, p.Active)
+		isFirst = true
+	}
+
+	if p.PaymentID != -1 {
+		if isFirst == false {
+			query += ","
+		}
+
+		query += " payment_id = ?"
+		queryValues = append(queryValues, p.PaymentID)
+		isFirst = false
+	}
+
+	if p.ImageID != -1 {
+		if isFirst == false {
+			query += ","
+		}
+
+		query += " image_id = ?"
+		queryValues = append(queryValues, p.ImageID)
+	}
+
+	query += " where id = " + ""
+	queryValues = append(queryValues, p.ID)
+
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	_, err = stmt.Exec(queryValues)
+	return err
+}
+
+func (p *PaymentReceipt) Remove() error {
+	p.Active = 0
+	return p.Update()
+}
+
+type PaymentReceipts struct {
+	PaymentReceipts []PaymentReceipt `json:"payment_receipts"`
+}
+
+func (p *PaymentReceipts) Select(q PaymentReceipt) error {
+	var queryValues []interface{}
+
+	var isSearch = false
+	var query = "select * from robotenok.payment_receipts" + " where "
+
+	if q.Active != -1 {
+		query += "active = ?"
+		queryValues = append(queryValues, q.Active)
+		isSearch = true
+	} else {
+		query += "active = 1"
+	}
+
+	if q.ID != -1 {
+		query += " and id = ?"
+		queryValues = append(queryValues, q.ID)
+		isSearch = true
+	}
+
+	if q.PaymentID != -1 {
+		query += " and payment_id = ?"
+		queryValues = append(queryValues, q.PaymentID)
+		isSearch = true
+	}
+
+	if q.ImageID != -1 {
+		query += "and image_id = ?"
+		queryValues = append(queryValues, q.ImageID)
+		isSearch = true
+	}
+
+	if isSearch == false {
+		return errors.New("nothing to do")
+	}
+
+	stmt, err := db.Prepare(query)
+	defer stmt.Close()
+
+	row, err := stmt.Query(queryValues)
+
+	if err != nil {
+		return err
+	}
+
+	for row.Next() {
+		t := PaymentReceipt{}
+		err := row.Scan(&t.ID, &t.PaymentID, &t.ImageID, &t.Active)
+
+		if err != nil {
+			return err
+		}
+
+		p.PaymentReceipts = append(p.PaymentReceipts, t)
+	}
+
+	return nil
+}
+
+func AddPaymentReceipt(w http.ResponseWriter, r *http.Request) {
+	var request Request
+	var newPaymentReceipt PaymentReceipt
+
+	defer LogHandler("payment receipts add")
+
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
+
+	err = request.checkToken()
+	HandleError(err, w, SecurityError)
+
+	err = permCheck(request.UserID, 0)
+	HandleError(err, w, SecurityError)
+
+	textJson, err := json.Marshal(request.Body)
+	HandleError(err, w, WrongDataError)
+
+	err = json.Unmarshal(textJson, &newPaymentReceipt)
+	HandleError(err, w, WrongDataError)
+
+	err = newPaymentReceipt.Add()
+	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, newPaymentReceipt)
+}
+
+func UpdatePaymentReceipt(w http.ResponseWriter, r *http.Request) {
+	var request Request
+	var updatingPaymentReceipt PaymentReceipt
+
+	defer LogHandler("payment receipts update")
+
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
+
+	err = request.checkToken()
+	HandleError(err, w, SecurityError)
+
+	err = permCheck(request.UserID, 0)
+	HandleError(err, w, SecurityError)
+
+	textJson, err := json.Marshal(request.Body)
+	HandleError(err, w, WrongDataError)
+
+	updatingPaymentReceipt.Init()
+	err = json.Unmarshal(textJson, &updatingPaymentReceipt)
+	HandleError(err, w, WrongDataError)
+
+	err = updatingPaymentReceipt.Update()
+	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, updatingPaymentReceipt)
+}
+
+func RemovePaymentReceipt(w http.ResponseWriter, r *http.Request) {
+	var request Request
+	var removingPaymentReceipt PaymentReceipt
+
+	defer LogHandler("payment receipts remove")
+
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
+
+	err = request.checkToken()
+	HandleError(err, w, SecurityError)
+
+	err = permCheck(request.UserID, 0)
+	HandleError(err, w, SecurityError)
+
+	textJson, err := json.Marshal(request.Body)
+	HandleError(err, w, WrongDataError)
+
+	err = json.Unmarshal(textJson, &removingPaymentReceipt)
+	HandleError(err, w, WrongDataError)
+
+	err = removingPaymentReceipt.Remove()
+	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, removingPaymentReceipt)
+}
+
+func SelectPaymentsReceipts(w http.ResponseWriter, r *http.Request) {
+	var request Request
+	var searchingPaymentReceipt PaymentReceipt
+	var selectedPaymentReceipts PaymentReceipts
+
+	defer LogHandler("payment receipts select")
+
+	err := requestHandler(&request, r)
+	HandleError(err, w, WrongDataError)
+
+	err = request.checkToken()
+	HandleError(err, w, SecurityError)
+
+	textJson, err := json.Marshal(request.Body)
+	HandleError(err, w, WrongDataError)
+
+	searchingPaymentReceipt.Init()
+	err = json.Unmarshal(textJson, &searchingPaymentReceipt)
+	HandleError(err, w, WrongDataError)
+
+	err = selectedPaymentReceipts.Select(searchingPaymentReceipt)
+	HandleError(err, w, UnknownError)
+
+	SendData(w, 200, selectedPaymentReceipts.PaymentReceipts)
 }
 
 type Payment struct {
