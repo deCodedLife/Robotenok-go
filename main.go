@@ -158,11 +158,10 @@ func initHandlers(r *mux.Router) {
 	r.HandleFunc("/robotenok/payment", RemovePayment).Methods("DELETE")
 	r.HandleFunc("/robotenok/payments", SelectPayments).Methods("POST")
 
-	// TODO: Implement handlers for payment objects
-	r.HandleFunc("/robotenok/payment-object", nil).Methods("POST")
-	r.HandleFunc("/robotenok/payment-object", nil).Methods("PUT")
-	r.HandleFunc("/robotenok/payment-object", nil).Methods("DELETE")
-	r.HandleFunc("/robotenok/payment-objects", nil).Methods("POST")
+	r.HandleFunc("/robotenok/payment-object", AddPaymentObject).Methods("POST")
+	r.HandleFunc("/robotenok/payment-object", UpdatePaymentObject).Methods("PUT")
+	r.HandleFunc("/robotenok/payment-object", RemovePaymentObject).Methods("DELETE")
+	r.HandleFunc("/robotenok/payment-objects", SelectPaymentsObject).Methods("POST")
 
 	// TODO: Implement handlers for receipts
 	r.HandleFunc("/robotenok/payment-receipt", nil).Methods("POST")
