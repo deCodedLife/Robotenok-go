@@ -162,11 +162,6 @@ func initHandlers(r *mux.Router) {
 	r.HandleFunc("/robotenok/payment-object", RemovePaymentObject).Methods("DELETE")
 	r.HandleFunc("/robotenok/payment-objects", SelectPaymentsObject).Methods("POST")
 
-	r.HandleFunc("/robotenok/payment-receipt", AddPaymentReceipt).Methods("POST")
-	r.HandleFunc("/robotenok/payment-receipt", UpdatePaymentReceipt).Methods("PUT")
-	r.HandleFunc("/robotenok/payment-receipt", RemovePaymentReceipt).Methods("DELETE")
-	r.HandleFunc("/robotenok/payment-receipts", SelectPaymentsReceipts).Methods("POST")
-
 	r.HandleFunc("/robotenok/group-student", AddGroupStudent).Methods("POST")
 	r.HandleFunc("/robotenok/group-student", UpdateGroupStudent).Methods("PUT")
 	r.HandleFunc("/robotenok/group-student", RemoveGroupStudent).Methods("DELETE")
@@ -181,6 +176,11 @@ func initHandlers(r *mux.Router) {
 	r.HandleFunc("/robotenok/cost", UpdateCost).Methods("PUT")
 	r.HandleFunc("/robotenok/cost", RemoveCost).Methods("DELETE")
 	r.HandleFunc("/robotenok/costs", SelectCosts).Methods("POST")
+
+	r.HandleFunc("/robotenok/cost-receipt", AddCostsReceipt).Methods("POST")
+	r.HandleFunc("/robotenok/cost-receipt", UpdateCostsReceipt).Methods("PUT")
+	r.HandleFunc("/robotenok/cost-receipt", RemoveCostsReceipt).Methods("DELETE")
+	r.HandleFunc("/robotenok/cost-receipts", SelectCostsReceipts).Methods("POST")
 
 	r.HandleFunc("/robotenok/class", AddClass).Methods("POST")
 	r.HandleFunc("/robotenok/class", UpdateClass).Methods("PUT")
