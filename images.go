@@ -35,7 +35,7 @@ func (i ImageData) Add() error {
 	queryValues = append(queryValues, i.FileName)
 	queryValues = append(queryValues, i.Hash)
 
-	var query = "insert into robotenok.images (user_id, date, time, path, hash) values (?, ?, ?, ?, ?)"
+	var query = "insert into robotenok.images (user_id, date, time, filename, hash) values (?, ?, ?, ?, ?)"
 
 	stmt, err := db.Prepare(query)
 	defer stmt.Close()
@@ -44,7 +44,7 @@ func (i ImageData) Add() error {
 		return err
 	}
 
-	_, err = stmt.Exec(queryValues)
+	_, err = stmt.Exec(queryValues...)
 
 	return err
 }
@@ -122,7 +122,7 @@ func (i ImageData) Update() error {
 	stmt, err := db.Prepare(query)
 	defer stmt.Close()
 
-	_, err = stmt.Exec(queryValues)
+	_, err = stmt.Exec(queryValues...)
 	return err
 }
 
@@ -173,8 +173,14 @@ func (i *ImagesData) Select (q ImageData) error {
 		isSearch = true
 	}
 
+	if q.Hash != "" {
+		query += " and hash = ?"
+		queryValues = append(queryValues, q.Hash)
+		isSearch = true
+	}
+
 	if q.FileName != "" {
-		query += " and path = ?"
+		query += " and filename = ?"
 		queryValues = append(queryValues, q.FileName)
 		isSearch = true
 	}
@@ -186,7 +192,7 @@ func (i *ImagesData) Select (q ImageData) error {
 	stmt, err := db.Prepare(query)
 	defer stmt.Close()
 
-	row, err := stmt.Query(queryValues)
+	row, err := stmt.Query(queryValues...)
 
 	if err != nil {
 		return err
@@ -212,7 +218,7 @@ func (i *ImageData) GenRandom() {
 
 	output.Init()
 	output.FileName = GenString(32)
-	output.Hash = GenString(48)
+	output.Hash = GenString(42)
 
 	selectedImage.Select(output)
 
@@ -221,6 +227,7 @@ func (i *ImageData) GenRandom() {
 	}
 
 	i.FileName = output.FileName
+	i.Hash = output.Hash
 }
 
 func AddImage(w http.ResponseWriter, r *http.Request) {

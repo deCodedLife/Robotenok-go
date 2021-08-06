@@ -35,6 +35,8 @@ func UploadImage(w http.ResponseWriter, r *http.Request) {
 	searchingImage.Init()
 	searchingImage.Hash = hash
 
+	//r.ParseMultipartForm(0)
+
 	defer LogHandler("image upload")
 	var err = searchingImage.GetImage()
 
@@ -48,6 +50,39 @@ func UploadImage(w http.ResponseWriter, r *http.Request) {
 
 	SendData(w, 200, searchingImage)
 }
+
+/*
+var param = mux.Vars(r)
+	var hash = param["hash"]
+
+	var searchingImage ImageData
+	searchingImage.Init()
+	searchingImage.Hash = hash
+
+	r.ParseMultipartForm(0)
+
+	defer LogHandler("image upload")
+	var err = searchingImage.GetImage()
+
+	HandleError(err, w, WrongDataError)
+
+	for _, h := range r.MultipartForm.Value[0] {
+		image, err := h.Open()
+		HandleError(err, w, WrongDataError)
+
+		defer image.Close()
+
+		file, err := os.Create(ImagesFolder + "/" + hash)
+		defer file.Close()
+
+		HandleError(err, w, UnknownError)
+
+		_, err = io.Copy(file, image)
+		HandleError(err, w, UnknownError)
+	}
+
+	SendData(w, 200, searchingImage)
+ */
 
 func RemoveImageFile(w http.ResponseWriter, r *http.Request) {
 	var param = mux.Vars(r)
