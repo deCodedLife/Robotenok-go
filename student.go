@@ -15,12 +15,14 @@ type Student struct {
 	Phone   string `json:"phone"`
 	Parents string `json:"parents"`
 	Sex     int    `json:"sex"` // 0 male, 1 female
+	Image   int `json:"image"`
 }
 
 func (s *Student) Init() {
 	s.ID = -1
 	s.Active = -1
 	s.Sex = -1
+	s.Image = -1
 }
 
 func (s Student) Add() error {
@@ -30,8 +32,9 @@ func (s Student) Add() error {
 	queryValues = append(queryValues, s.Phone)
 	queryValues = append(queryValues, s.Parents)
 	queryValues = append(queryValues, s.Sex)
+	queryValues = append(queryValues, s.Image)
 
-	var query = "insert into robotenok.students (name, phone, parents, sex) values (?, ?, ?, ?)"
+	var query = "insert into robotenok.students (name, phone, parents, sex, image) values (?, ?, ?, ?, ?)"
 	_, err := db.Exec(query, queryValues...)
 
 	return err
@@ -84,6 +87,15 @@ func (s Student) Update() error {
 		isFirst = false
 	}
 
+	if s.Image != -1 {
+		if isFirst == false {
+			query += ","
+		}
+
+		query += " image= ?"
+		queryValues = append(queryValues, s.Image)
+	}
+
 	query += " where id = " + strconv.Itoa(s.ID)
 
 	stmt, err := db.Prepare(query)
@@ -133,7 +145,6 @@ func (s *Students) selectStudents(q Student) error {
 		isSearch = true
 	}
 
-
 	if q.Parents != "" {
 		query += " and parents like '%" + template.HTMLEscapeString(q.Parents) + "%'"
 		isSearch = true
@@ -146,6 +157,12 @@ func (s *Students) selectStudents(q Student) error {
 
 	if q.Name != "" {
 		query += " and name like '%" + template.HTMLEscapeString(q.Name) + "%'"
+		isSearch = true
+	}
+
+	if q.Image != -1 {
+		query += " and image = ?"
+		queryValues = append(queryValues, q.Image)
 		isSearch = true
 	}
 
