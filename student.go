@@ -12,6 +12,7 @@ type Student struct {
 	ID      int    `json:"id"`
 	Active  int    `json:"active"`
 	Name    string `json:"name"`
+	Age     string `json:"age"`
 	Phone   string `json:"phone"`
 	Parents string `json:"parents"`
 	Sex     int    `json:"sex"` // 0 male, 1 female
@@ -21,6 +22,10 @@ type Student struct {
 func (s *Student) Init() {
 	s.ID = -1
 	s.Active = -1
+	s.Name = ""
+	s.Age = ""
+	s.Phone = ""
+	s.Parents = ""
 	s.Sex = -1
 	s.Image = -1
 }
@@ -29,12 +34,13 @@ func (s Student) Add() error {
 	var queryValues []interface{}
 
 	queryValues = append(queryValues, s.Name)
+	queryValues = append(queryValues, s.Age)
 	queryValues = append(queryValues, s.Phone)
 	queryValues = append(queryValues, s.Parents)
 	queryValues = append(queryValues, s.Sex)
 	queryValues = append(queryValues, s.Image)
 
-	var query = "insert into robotenok.students (name, phone, parents, sex, image) values (?, ?, ?, ?, ?)"
+	var query = "insert into robotenok.students (name, age, phone, parents, sex, image) values (?, ?, ?, ?, ?, ?)"
 	_, err := db.Exec(query, queryValues...)
 
 	return err
@@ -54,6 +60,12 @@ func (s Student) Update() error {
 	if s.Name != "" {
 		query += " name = ?"
 		queryValues = append(queryValues, s.Name)
+		isFirst = false
+	}
+
+	if s.Age != "" {
+		query += " age = ?"
+		queryValues = append(queryValues, s.Age)
 		isFirst = false
 	}
 
@@ -160,6 +172,12 @@ func (s *Students) selectStudents(q Student) error {
 		isSearch = true
 	}
 
+	if q.Age != "" {
+		query += " and age = ?"
+		queryValues = append(queryValues, q.Age)
+		isSearch = true
+	}
+
 	if q.Image != -1 {
 		query += " and image = ?"
 		queryValues = append(queryValues, q.Image)
@@ -185,7 +203,7 @@ func (s *Students) selectStudents(q Student) error {
 
 	for row.Next() {
 		t := Student{}
-		err := row.Scan(&t.ID, &t.Active, &t.Name, &t.Phone, &t.Parents, &t.Sex)
+		err := row.Scan(&t.ID, &t.Active, &t.Name, &t.Age, &t.Phone, &t.Parents, &t.Sex, &t.Image)
 
 		if err != nil {
 			return err

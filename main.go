@@ -42,7 +42,7 @@ func configure() {
 	dates := strings.Split(date, ":")
 	date = ""
 
-	ImagesFolder = "images/"
+	ImagesFolder = "images"
 
 	for i := 0; i < len(dates); i++ {
 		date = date + dates[i] + "-"
@@ -106,8 +106,7 @@ func access(w http.ResponseWriter, r *http.Request) {
 }
 
 func initHandlers(r *mux.Router) {
-	r.Handle(
-		"/robotenok/images",
+	r.PathPrefix("/robotenok/images/").Handler(
 		http.StripPrefix("/robotenok/images/",
 		http.FileServer(http.Dir(ImagesFolder)))).Methods("GET")
 
