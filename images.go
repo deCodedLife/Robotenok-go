@@ -51,7 +51,7 @@ func (i ImageData) Add() error {
 
 func (i ImageData) Update() error {
 	if i.ID == -1 {
-		return errors.New("payment id has wrong data")
+		return errors.New("image id has wrong data")
 	}
 
 	var queryValues []interface{}

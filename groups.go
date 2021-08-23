@@ -767,7 +767,6 @@ func SelectGroupStudents(w http.ResponseWriter, r *http.Request) {
 type Group struct {
 	ID        int  `json:"id"`
 	Active    int   `json:"active"`
-	Name      string `json:"name"`
 	Time      string `json:"time"`
 	Duration  int  `json:"duration"`
 	Weekday   int  `json:"weekday"`
@@ -777,7 +776,6 @@ type Group struct {
 func (g *Group) Init() {
 	g.ID = -1
 	g.Active = -1
-	g.Name = ""
 	g.Time = ""
 	g.Duration = -1
 	g.Weekday = -1
@@ -787,13 +785,12 @@ func (g *Group) Init() {
 func (g Group) Add() error {
 	var queryValues []interface{}
 
-	queryValues = append(queryValues, g.Name)
 	queryValues = append(queryValues, g.Time)
 	queryValues = append(queryValues, g.Duration)
 	queryValues = append(queryValues, g.Weekday)
 	queryValues = append(queryValues, g.GroupType)
 
-	var query = "insert into robotenok.`groups` (name, time, duration, weekday, group_type) values (?,?,?,?,?)"
+	var query = "insert into robotenok.`groups` (time, duration, weekday, group_type) values (?,?,?,?)"
 
 	stmt, err := db.Prepare(query)
 	defer stmt.Close()
@@ -821,16 +818,6 @@ func (g Group) Update() error {
 	if g.Active != -1 {
 		query += "active = ?"
 		queryValues = append(queryValues, g.Active)
-		isFirst = false
-	}
-
-	if g.Name != "" {
-		if isFirst == false {
-			query += ","
-		}
-
-		query += " name = ?"
-		queryValues = append(queryValues, g.Name)
 		isFirst = false
 	}
 
@@ -940,11 +927,6 @@ func (g *Groups) Select(q Group) error {
 		isSearch = true
 	}
 
-	if q.Name != "" {
-		query += " and name like '%" + template.HTMLEscapeString(q.Name) + "%'"
-		isSearch = true
-	}
-
 	if isSearch == false {
 		return errors.New("nothing to do")
 	}
@@ -964,7 +946,7 @@ func (g *Groups) Select(q Group) error {
 
 	for row.Next() {
 		t := Group{}
-		err := row.Scan(&t.ID, &t.Active, &t.Name, &t.Time, &t.Duration, &t.Weekday, &t.GroupType)
+		err := row.Scan(&t.ID, &t.Active, &t.Time, &t.Duration, &t.Weekday, &t.GroupType)
 
 		if err != nil {
 			return err

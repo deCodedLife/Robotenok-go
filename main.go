@@ -110,6 +110,8 @@ func initHandlers(r *mux.Router) {
 		http.StripPrefix("/robotenok/images/",
 		http.FileServer(http.Dir(ImagesFolder)))).Methods("GET")
 
+	r.HandleFunc("/robotenok/addDevice", AddDevice).Methods("POST")
+
 	r.HandleFunc("/robotenok/image", AddImage).Methods("POST")
 	r.HandleFunc("/robotenok/image", UpdateImage).Methods("PUT")
 	r.HandleFunc("/robotenok/image", RemoveImage).Methods("DELETE")
