@@ -212,22 +212,26 @@ func (i *ImagesData) Select (q ImageData) error {
 	return nil
 }
 
-func (i *ImageData) GenRandom() {
+func (i* ImageData) GenRandom() error {
 	var output ImageData
-	var selectedImage ImagesData
+	var selectedImages ImagesData
 
-	output.Init()
 	output.FileName = GenString(32)
 	output.Hash = GenString(42)
 
-	selectedImage.Select(output)
+	err := selectedImages.Select(output)
+	if err != nil {
+		return err
+	}
 
-	if len(selectedImage.Images) > 0 {
-		output.GenRandom()
+	if len(selectedImages.Images) > 0 {
+		i.GenRandom()
 	}
 
 	i.FileName = output.FileName
 	i.Hash = output.Hash
+
+	return nil
 }
 
 func AddImage(w http.ResponseWriter, r *http.Request) {
@@ -251,7 +255,8 @@ func AddImage(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(textJson, &newImage)
 	HandleError(err, w, WrongDataError)
 
-	newImage.GenRandom()
+	err = newImage.GenRandom()
+	HandleError(err, w, UnknownError)
 
 	err = newImage.Add()
 	HandleError(err, w, UnknownError)

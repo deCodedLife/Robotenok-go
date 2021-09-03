@@ -12,6 +12,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 var db *sql.DB
@@ -53,6 +54,7 @@ func configure() {
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
 	}
+
 	wrt := io.MultiWriter(os.Stdout, f)
 	log.SetOutput(wrt)
 
@@ -128,7 +130,7 @@ func initHandlers(r *mux.Router) {
 	r.HandleFunc("/robotenok/user", RemoveUser).Methods("DELETE")
 	r.HandleFunc("/robotenok/users", SelectUser).Methods("POST")
 
-	r.HandleFunc("/robotenok/student", AddStudent).Methods("POST")
+	r.HandleFunc("/robotenok/student/{hash}", AddStudent).Methods("POST")
 	r.HandleFunc("/robotenok/student", UpdateStudent).Methods("PUT")
 	r.HandleFunc("/robotenok/student", RemoveStudent).Methods("DELETE")
 	r.HandleFunc("/robotenok/students", SelectStudents).Methods("POST")

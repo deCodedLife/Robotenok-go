@@ -4,19 +4,20 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"reflect"
 )
 
 type Device struct {
 	ID     int    `json:"id"`
 	Hash   string `json:"hash"`
 	Active int    `json:"active"`
+	Status int    `json:"status"`
 }
 
 func (d *Device) Init () {
 	d.ID = -1
 	d.Hash = ""
 	d.Active = -1
+	d.Status = -1
 }
 
 func (d *Device) Add() error {
@@ -81,27 +82,41 @@ func (d *Device) Remove() error {
 	return d.Update()
 }
 
+func (c *ConfirmedDevices) Init() {
+	c.ID = -1
+	c.Hash = ""
+	c.Active = -1
+}
 
-func (c *ConfirmedDevices) Get(info interface{}) error {
-	var whereState string
 
-	if reflect.TypeOf(info).Kind() == reflect.String {
-		whereState = "hash = ?"
-		info = info.(string)
-	} else if reflect.TypeOf(info).Kind() == reflect.Int32 {
-		whereState = "id = ?"
-		info = info.(int32)
-	} else {
-		return errors.New("wrong data type")
+func (d *Device) Get() error {
+	var query = "select * from robotenok.confirmed_devices where active = 1"
+
+	var queryValues []interface{}
+
+	if d.ID != -1 {
+		query += " and id = ?"
+		queryValues = append(queryValues, d.ID)
 	}
 
-	row := db.QueryRow("select * from confirmed_devices where "+whereState, info)
+	if d.Hash != "" {
+		query += " and hash = ?"
+		queryValues = append(queryValues, d.Hash)
+	}
+
+	stmt, err := db.Prepare(query)
+
+	if err != nil {
+		return err
+	}
+
+	row := stmt.QueryRow(queryValues...)
 
 	if row.Err() != nil {
 		return row.Err()
 	}
 
-	err := row.Scan(&c.ID, &c.Hash, &c.Active)
+	err = row.Scan(&d.ID, &d.Hash, &d.Active, &d.Status)
 	return err
 }
 
@@ -110,8 +125,8 @@ func (c ConfirmedDevices) Add() error {
 	return err
 }
 
-func (c ConfirmedDevices) StatusChange() error {
-	_, err := db.Query("update robotenok.confirmed_devices set active = ? where id = ?", c.Active, c.ID)
+func (d Device) StatusChange() error {
+	_, err := db.Query("update robotenok.confirmed_devices set active = ? where id = ?", d.Active, d.ID)
 	return err
 }
 

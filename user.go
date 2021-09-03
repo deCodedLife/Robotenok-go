@@ -3,9 +3,9 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"github.com/gorilla/mux"
 	"html/template"
 	"net/http"
-	"strconv"
 	"time"
 )
 
@@ -81,7 +81,7 @@ func (u *User) Select() error {
 	return err
 }
 
-func (u User) Add(hash ConfirmedDevices) error {
+func (u User) Add(hash Device) error {
 	if hash.Active != 1 {
 		return errors.New("hash was already used before")
 	}
@@ -99,8 +99,9 @@ func (u User) Add(hash ConfirmedDevices) error {
 	queryValues = append(queryValues, u.Name)
 	queryValues = append(queryValues, GenString(8))
 	queryValues = append(queryValues, ToSHA512(u.Password))
+	queryValues = append(queryValues, u.UserType)
 
-	query = "insert into robotenok.users (name, login, password) values (?, ?, ?)"
+	query = "insert into robotenok.users (name, login, password, user_type) values (?, ?, ?, ?)"
 	_, err = db.Query(query, queryValues...)
 
 	return err
@@ -240,29 +241,24 @@ func (u *Users) Select(q User) error {
 func AddUser(w http.ResponseWriter, r *http.Request) {
 	var request Request
 	var newUser User
-	var device ConfirmedDevices
+	var device Device
 
 	defer LogHandler("User add")
 
-	hash := r.URL.Query().Get("hash")
-
-	if len(hash) > 13 {
-		err := device.Get(hash)
-		HandleError(err, w, SecurityError)
-	} else {
-		id, err := strconv.Atoi(hash)
-		HandleError(err, w, WrongDataError)
-
-		err = device.Get(id)
-		HandleError(err, w, SecurityError)
-	}
+	hash := mux.Vars(r)["hash"]
 
 	if hash == "" {
 		SendData(w, 400, WrongDataError.Description)
 		return
 	}
 
-	err := requestHandler(&request, r)
+	device.Init()
+	device.Hash = hash
+
+	err := device.Get()
+	HandleError(err, w, SecurityError)
+
+	err = requestHandler(&request, r)
 	HandleError(err, w, WrongDataError)
 
 	err = request.checkToken()

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"github.com/gorilla/mux"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -30,7 +31,18 @@ func (s *Student) Init() {
 	s.Image = -1
 }
 
-func (s Student) Add() error {
+func (s Student) Add(device Device) error {
+	if device.Active != 1 {
+		return errors.New("hash was already used before")
+	}
+
+	device.Active = 0
+	err := device.StatusChange()
+
+	if err != nil {
+		return err
+	}
+
 	var queryValues []interface{}
 
 	queryValues = append(queryValues, s.Name)
@@ -41,7 +53,7 @@ func (s Student) Add() error {
 	queryValues = append(queryValues, s.Image)
 
 	var query = "insert into robotenok.students (name, age, phone, parents, sex, image) values (?, ?, ?, ?, ?, ?)"
-	_, err := db.Exec(query, queryValues...)
+	_, err = db.Exec(query, queryValues...)
 
 	return err
 }
@@ -216,27 +228,29 @@ func (s *Students) selectStudents(q Student) error {
 }
 
 func AddStudent(w http.ResponseWriter, r *http.Request) {
-	var request Request
 	var newStudent Student
+	var device Device
 
 	defer LogHandler("student add")
 
-	err := requestHandler(&request, r)
-	HandleError(err, w, WrongDataError)
+	hash := mux.Vars(r)["hash"]
 
-	err = request.checkToken()
+	if hash == "" {
+		err := errors.New("there are no hash in request")
+		HandleError(err, w, WrongDataError)
+		return
+	}
+
+	device.Init()
+	device.Hash = hash
+
+	err := device.Get()
 	HandleError(err, w, SecurityError)
 
-	err = permCheck(request.UserID, 1)
-	HandleError(err, w, SecurityError)
-
-	textJson, err := json.Marshal(request.Body)
+	err = json.NewDecoder(r.Body).Decode(&newStudent)
 	HandleError(err, w, WrongDataError)
 
-	err = json.Unmarshal(textJson, &newStudent)
-	HandleError(err, w, WrongDataError)
-
-	err = newStudent.Add()
+	err = newStudent.Add(device)
 	HandleError(err, w, UnknownError)
 
 	SendData(w, 200, newStudent)
